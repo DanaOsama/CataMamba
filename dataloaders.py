@@ -6,8 +6,54 @@ import sys
 import shutil
 import os
 import logging
-
+import json
 from monai.data import CacheDataset, DataLoader
+
+import os
+import pandas as pd
+from PIL import Image
+import torch
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+
+class TaskLoader(Dataset):
+
+    def __init__(self, json_path, task_list, transform=None):
+        """
+        Args:
+            json_path (string): Path to the JSON file with video paths and labels.
+            task_list (list): List of tasks that will be loaded
+            transform (callable, optional): Optional transform to be applied on a sample.
+        """
+        self.transform = transform
+        self.tasks = {task: {} for task in task_list}
+
+        # Load data from JSON file
+        with open(json_path, 'r') as f:
+            data = json.load(f)
+            for item in data['videos']:
+                pass
+
+    def __len__(self):
+        return len(self.videos)
+
+    def __getitem__(self, idx):
+        video_path = self.videos[idx]
+        frames = [os.path.join(video_path, frame) for frame in os.listdir(video_path) if frame.endswith('.jpg') or frame.endswith('.png')]
+        frames.sort()  # Ensure frames are in order
+
+        # Load frames
+        images = [Image.open(frame) for frame in frames]
+        if self.transform:
+            images = [self.transform(image) for image in images]
+
+        # Load labels
+        labels = self.labels[video_path]
+
+        return torch.stack(images), labels
+
+
+
 
 
 
