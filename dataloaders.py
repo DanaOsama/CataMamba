@@ -1,6 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
-import ignite
+# import ignite
 import tempfile
 import sys
 import shutil
@@ -8,14 +8,15 @@ import os
 import logging
 import json
 from monai.data import CacheDataset, DataLoader
-
+import numpy as np
 import os
 import pandas as pd
 from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-
+# from torchvision import transforms
+from torchvision.transforms import v2
+import re
 
 
 
@@ -32,7 +33,15 @@ data = json.load(f)
 data = data['Train']['2_Cataracts-101']
 """
 
-class Cataracts101(Dataset):
+def extract_frame_number(filename):
+    # The regex pattern \d+ matches one or more digits
+    match = re.search(r'\d+', filename)
+    if match:
+        return match.group()  # This will return the first occurrence of one or more digits in the string
+    else:
+        return None  # Or raise an error/exception if preferred
+
+class Cataracts_101_21(Dataset):
     def __init__(self, data_list, root_dir=None, transform=None):
         self.data_list = data_list
         self.root_dir = root_dir
@@ -53,9 +62,6 @@ class Cataracts101(Dataset):
         # Load the annotation CSV file
         annotations = pd.read_csv(annotation_path)
 
-# Load the annotation CSV file
-        annotations = pd.read_csv(annotation_path)
-
         # Load all frames and their corresponding phase labels
         frames = [os.path.join(folder_path, frame) for frame in os.listdir(folder_path) if frame.endswith('.jpg') or frame.endswith('.png')]
         frames.sort()  # Ensure frames are in order
@@ -64,25 +70,39 @@ class Cataracts101(Dataset):
         labels = []
         for frame in frames:
             image = Image.open(frame)
+            # transform the image to tensor
+            # image = v2.ToTensor()(image)
+            transforms = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+            image = transforms(image)
+
             if self.transform:
                 image = self.transform(image)
             images.append(image)
 
             # Extract the frame name and find the corresponding phase label
-            frame_name = os.path.basename(frame)
-            phase_label = annotations[annotations['frames'] == frame_name]['phases'].values[0]
-            labels.append(phase_label)
+            frame_name = extract_frame_number(os.path.basename(frame))
+            # print the types of the columns in the pandas dataframe
+            # print(annotations.dtypes)
+            # print(f"Phase label for frame {frame_name}: ", annotations[annotations['FrameNo'] == int(frame_name)]['Phase'].values)
+            # phase_label = annotations[annotations['FrameNo'] == int(frame_name)]['Phase'].values
+            # print("Type of phase_label: ", type(phase_label))
+            # print("Shape of phase_label: ", phase_label.shape)
+            # labels.append(phase_label)
+            labels_2 = torch.tensor(annotations['FrameNo'].values)
 
-        # Convert labels to a tensor
-        labels = torch.tensor(labels, dtype=torch.long)
+        # # Convert labels to a tensor
+        #     # print("Labels: ", labels)
+        # print("Length of images: ", len(images))
+        # print("Length of labels: ", len(labels))
+        # labels = torch.tensor(labels, dtype=torch.long)
 
-        # Stack images to create a batch-like tensor for all frames in the video
-        if len(images) > 0:
-            images = torch.stack(images)
-        else:
-            raise RuntimeError(f"No images found in {folder_path}")
+        # # Stack images to create a batch-like tensor for all frames in the video
+        # if len(images) > 0:
+        #     images = torch.stack(images)
+        # else:
+        #     raise RuntimeError(f"No images found in {folder_path}")
 
-        return images, labels
+        return images, labels_2
     
     
 class TaskLoader(Dataset):
@@ -137,7 +157,6 @@ class TaskLoader(Dataset):
         labels = self.labels[video_path]
 
         return torch.stack(images), labels
-
 
 
 
