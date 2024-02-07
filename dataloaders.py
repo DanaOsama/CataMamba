@@ -16,23 +16,109 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
+
+
+
+"""
+All Dataset classes receive the split from the JSON file
+
+For Cataracts101, the usage looks like this:
+json_path = "2_NEW_dataset_level_labels.json"
+# Opening JSON file
+f = open(json_path)
+
+# returns JSON object as a dictionary
+data = json.load(f)
+data = data['Train']['2_Cataracts-101']
+"""
+
+class Cataracts101(Dataset):
+    def __init__(self, data_list, root_dir=None, transform=None):
+        self.data_list = data_list
+        self.root_dir = root_dir
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.data_list)
+
+    def __getitem__(self, index):
+        if self.root_dir is None:
+            folder_path = self.data_list[index]['File_Path']
+            frames = [os.path.join(folder_path, frame) for frame in os.listdir(folder_path) if frame.endswith('.jpg') or frame.endswith('.png')]
+            annotation_path = self.data_list[index]['Ground_Truth_Path']
+        else:
+            folder_path = os.path.join(self.root_dir, self.data_list[index]['File_Path'])
+            annotation_path = os.path.join(self.root_dir, self.data_list[index]['Ground_Truth_Path'])
+
+        # Load the annotation CSV file
+        annotations = pd.read_csv(annotation_path)
+
+# Load the annotation CSV file
+        annotations = pd.read_csv(annotation_path)
+
+        # Load all frames and their corresponding phase labels
+        frames = [os.path.join(folder_path, frame) for frame in os.listdir(folder_path) if frame.endswith('.jpg') or frame.endswith('.png')]
+        frames.sort()  # Ensure frames are in order
+
+        images = []
+        labels = []
+        for frame in frames:
+            image = Image.open(frame)
+            if self.transform:
+                image = self.transform(image)
+            images.append(image)
+
+            # Extract the frame name and find the corresponding phase label
+            frame_name = os.path.basename(frame)
+            phase_label = annotations[annotations['frames'] == frame_name]['phases'].values[0]
+            labels.append(phase_label)
+
+        # Convert labels to a tensor
+        labels = torch.tensor(labels, dtype=torch.long)
+
+        # Stack images to create a batch-like tensor for all frames in the video
+        if len(images) > 0:
+            images = torch.stack(images)
+        else:
+            raise RuntimeError(f"No images found in {folder_path}")
+
+        return images, labels
+    
+    
 class TaskLoader(Dataset):
 
     def __init__(self, json_path, task_list, transform=None):
         """
         Args:
             json_path (string): Path to the JSON file with video paths and labels.
-            task_list (list): List of tasks that will be loaded
+            task_list (list): List of tasks that will be loaded. All possible tasks are: 
+                ['All_Segmentation', 'Pupil_Segmentation', 'Lens_Segmentation', 'Iris/Pupil Segmentation', 
+                    'Phase_Detection', 'Tool_Presence', 'Step_Detection']
             transform (callable, optional): Optional transform to be applied on a sample.
         """
+        tasks = {task: [] for task in task_list}
+        self.task_list = task_list
+        self.splits = {split: tasks.copy() for split in data.keys()}
         self.transform = transform
-        self.tasks = {task: {} for task in task_list}
 
-        # Load data from JSON file
-        with open(json_path, 'r') as f:
-            data = json.load(f)
-            for item in data['videos']:
-                pass
+        json_path = "3_NEW_Task_level_labels.json"
+        # Opening JSON file
+        f = open(json_path)
+
+        # returns JSON object as a dictionary
+        data = json.load(f)
+
+        for split in data.keys():
+            for task in tasks.keys():
+                # print(f"Split: {split}  Task: {task}")
+                if "Segmentation" in task:
+                    for item in data[split]['Segmentation'][task]:
+                        temp = {item['File_Path']: item['Ground_Truth_Path']}
+                        self.splits[split][task].append(temp)
+                else:
+                    for item in data[split][task]:
+                        temp = {item['File_Path']: item['Ground_Truth_Path']}
+                        self.splits[split][task].append(temp)
 
     def __len__(self):
         return len(self.videos)
