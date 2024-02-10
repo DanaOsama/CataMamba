@@ -1,5 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
+
 # import ignite
 import tempfile
 import sys
@@ -14,10 +15,10 @@ import pandas as pd
 from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader
+
 # from torchvision import transforms
 from torchvision.transforms import v2
 import re
-
 
 
 """
@@ -31,15 +32,183 @@ f = open(json_path)
 # returns JSON object as a dictionary
 data = json.load(f)
 data = data['Train']['2_Cataracts-101']
+
+How would this framework fit within a healthcare workflow?
 """
+
 
 def extract_frame_number(filename):
     # The regex pattern \d+ matches one or more digits
-    match = re.search(r'\d+', filename)
+    match = re.search(r"\d+", filename)
     if match:
-        return match.group()  # This will return the first occurrence of one or more digits in the string
+        return (
+            match.group()
+        )  # This will return the first occurrence of one or more digits in the string
     else:
         return None  # Or raise an error/exception if preferred
+
+
+class IrisPupilSegmentation(Dataset):
+    pass
+
+
+class Cataracts_101_21_v2(Dataset):
+    def __init__(
+        self,
+        root_dir,
+        json_path,
+        dataset_name,
+        split,
+        num_clips,
+        clip_size,
+        step_size,
+        transform=None,
+    ):
+        """
+        Parameters:
+        - root_dir (string): Directory containing the downloaded and extracted dataset zip file.
+        - json_path (string): Path to the JSON file with video paths and labels.
+        - dataset_name (string): Name of the dataset to load. Either: "1_Cataracts-21" or "2_Cataracts-101".
+        - split (string): Split of the dataset to load. Either: "Train", "Validation", or "Test".
+        - num_clips (int): Number of clips to sample from each video.
+        - clip_size (int): Number of frames in each clip.
+        - step_size (int): Number of frames to skip when sampling clips.
+        - transform (callable, optional): Optional transform to be applied on a sample.
+        """
+        self.root_dir = root_dir
+        self.json_path = json_path
+        self.dataset_name = dataset_name
+        self.split = split
+        self.num_clips = num_clips
+        self.clip_size = clip_size
+        self.step_size = step_size
+        self.transform = transform
+
+        # self.num_frames = []
+        # self.csv_files = []
+        self.data = self._load_data()
+
+        # Loading some extra information for the Cataracts-101 dataset
+        if self.dataset_name == "2_Cataracts-101":
+            # Loading the csv file for label-to-class mapping
+            path = os.path.join(root_dir, "Cataracts_Multitask/2_Cataracts-101/phases.csv")
+            label_to_class = pd.read_csv(path)
+            print("Label to class: ", label_to_class.columns)
+            self.label_to_class = dict(zip(label_to_class['Phase'], label_to_class['Meaning']))
+
+            # Load some extra information about the videos for Cataracts-101
+            extra_info_csv = "Cataracts_Multitask/2_Cataracts-101/videos.csv"
+            path = os.path.join(root_dir, extra_info_csv)
+            video_extra_info = pd.read_csv(path)
+
+            # Sort the videos by VideoID
+            video_extra_info.sort_values(by="VideoID", inplace=True)
+
+            self.surgeon_ids = video_extra_info["Surgeon"].values
+            self.surgeon_experience = video_extra_info["Experience"].values
+        
+        elif self.dataset_name == "1_Cataracts-21":
+            # Loading the csv file for label-to-class mapping
+            path = os.path.join(root_dir, "Cataracts_Multitask/1_Cataracts-21/phases.csv")
+            label_to_class = pd.read_csv(path)
+            self.label_to_class = dict(zip(label_to_class['Phase'], label_to_class['Meaning']))
+        
+        else:
+            raise ValueError("Invalid dataset name")
+
+
+    def _load_data(self):
+        try:
+            # Opening JSON file
+            f = open(self.json_path)
+
+            # returns JSON object as a dictionary
+            data = json.load(f)
+
+            # data is of type list
+            # Each entry in the list is a data sample
+            data = data[self.split][self.dataset_name]
+
+            f.close()
+
+            return data
+        except FileNotFoundError:
+            print("File not found")
+            return None
+
+
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, index):
+        if self.root_dir is None:
+            folder_path = self.data[index]["File_Path"]
+            annotation_path = self.data[index]["Ground_Truth_Path"]
+        else:
+            folder_path = os.path.join(
+                self.root_dir, self.data[index]["File_Path"]
+            )
+            annotation_path = os.path.join(
+                self.root_dir, self.data[index]["Ground_Truth_Path"]
+            )
+        
+        # Load the annotation CSV file
+        annotations = pd.read_csv(annotation_path)
+
+        # count number of frames
+        num_frames = len(annotations)
+        assert num_frames > 0
+
+        if self.num_clips != -1:
+            required_num_frames = self.clip_size * self.num_clips * self.step_size
+        else:
+            # If the number of clips is -1, then use all frames
+            required_num_frames = num_frames
+        
+        # The offset variable determines the starting frame of the clip
+        offset = 0
+
+        # If there are more frames than required, then sample starting offset
+        if required_num_frames < num_frames:
+            offset_start_range = num_frames - required_num_frames
+            offset = np.random.randint(0, offset_start_range)
+
+        slice_object = slice(offset, required_num_frames + offset, self.step_size)
+        
+        selected_frames = annotations.iloc[slice_object]
+
+        images = []
+
+        for frame_number in selected_frames["FrameNo"]:
+            frame_path = folder_path + f"frame_{frame_number}.jpg"
+            image = Image.open(frame_path)
+            # transform the image to tensor
+            # image = v2.ToTensor()(image)
+            transforms = v2.Compose(
+                [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+            )
+            image = transforms(image)
+
+            if self.transform:
+                image = self.transform(image)
+            images.append(image)
+
+        # Pad the images if the number of frames is less than the required number of frames
+        # The padding is done by repeating the last frame
+            # This line (self.num_clips * self.clip_size) - len(images) 
+            # calculates the number of frames to pad
+        if len(images) < (self.num_clips * self.clip_size):
+            images.extend([images[-1]] *
+                          ((self.num_clips * self.clip_size) - len(images)))
+        
+        labels = torch.tensor(selected_frames["Phase"].values)
+
+        return images, labels
+
+
+
+
+
 
 class Cataracts_101_21(Dataset):
     def __init__(self, data_list, root_dir=None, transform=None):
@@ -52,18 +221,30 @@ class Cataracts_101_21(Dataset):
 
     def __getitem__(self, index):
         if self.root_dir is None:
-            folder_path = self.data_list[index]['File_Path']
-            frames = [os.path.join(folder_path, frame) for frame in os.listdir(folder_path) if frame.endswith('.jpg') or frame.endswith('.png')]
-            annotation_path = self.data_list[index]['Ground_Truth_Path']
+            folder_path = self.data_list[index]["File_Path"]
+            frames = [
+                os.path.join(folder_path, frame)
+                for frame in os.listdir(folder_path)
+                if frame.endswith(".jpg") or frame.endswith(".png")
+            ]
+            annotation_path = self.data_list[index]["Ground_Truth_Path"]
         else:
-            folder_path = os.path.join(self.root_dir, self.data_list[index]['File_Path'])
-            annotation_path = os.path.join(self.root_dir, self.data_list[index]['Ground_Truth_Path'])
+            folder_path = os.path.join(
+                self.root_dir, self.data_list[index]["File_Path"]
+            )
+            annotation_path = os.path.join(
+                self.root_dir, self.data_list[index]["Ground_Truth_Path"]
+            )
 
         # Load the annotation CSV file
         annotations = pd.read_csv(annotation_path)
 
         # Load all frames and their corresponding phase labels
-        frames = [os.path.join(folder_path, frame) for frame in os.listdir(folder_path) if frame.endswith('.jpg') or frame.endswith('.png')]
+        frames = [
+            os.path.join(folder_path, frame)
+            for frame in os.listdir(folder_path)
+            if frame.endswith(".jpg") or frame.endswith(".png")
+        ]
         frames.sort()  # Ensure frames are in order
 
         images = []
@@ -72,7 +253,9 @@ class Cataracts_101_21(Dataset):
             image = Image.open(frame)
             # transform the image to tensor
             # image = v2.ToTensor()(image)
-            transforms = v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+            transforms = v2.Compose(
+                [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+            )
             image = transforms(image)
 
             if self.transform:
@@ -88,7 +271,7 @@ class Cataracts_101_21(Dataset):
             # print("Type of phase_label: ", type(phase_label))
             # print("Shape of phase_label: ", phase_label.shape)
             # labels.append(phase_label)
-            labels_2 = torch.tensor(annotations['FrameNo'].values)
+            labels_2 = torch.tensor(annotations["Phase"].values)
 
         # # Convert labels to a tensor
         #     # print("Labels: ", labels)
@@ -103,16 +286,16 @@ class Cataracts_101_21(Dataset):
         #     raise RuntimeError(f"No images found in {folder_path}")
 
         return images, labels_2
-    
-    
+
+
 class TaskLoader(Dataset):
 
     def __init__(self, json_path, task_list, transform=None):
         """
         Args:
             json_path (string): Path to the JSON file with video paths and labels.
-            task_list (list): List of tasks that will be loaded. All possible tasks are: 
-                ['All_Segmentation', 'Pupil_Segmentation', 'Lens_Segmentation', 'Iris/Pupil Segmentation', 
+            task_list (list): List of tasks that will be loaded. All possible tasks are:
+                ['All_Segmentation', 'Pupil_Segmentation', 'Lens_Segmentation', 'Iris/Pupil Segmentation',
                     'Phase_Detection', 'Tool_Presence', 'Step_Detection']
             transform (callable, optional): Optional transform to be applied on a sample.
         """
@@ -132,12 +315,12 @@ class TaskLoader(Dataset):
             for task in tasks.keys():
                 # print(f"Split: {split}  Task: {task}")
                 if "Segmentation" in task:
-                    for item in data[split]['Segmentation'][task]:
-                        temp = {item['File_Path']: item['Ground_Truth_Path']}
+                    for item in data[split]["Segmentation"][task]:
+                        temp = {item["File_Path"]: item["Ground_Truth_Path"]}
                         self.splits[split][task].append(temp)
                 else:
                     for item in data[split][task]:
-                        temp = {item['File_Path']: item['Ground_Truth_Path']}
+                        temp = {item["File_Path"]: item["Ground_Truth_Path"]}
                         self.splits[split][task].append(temp)
 
     def __len__(self):
@@ -145,7 +328,11 @@ class TaskLoader(Dataset):
 
     def __getitem__(self, idx):
         video_path = self.videos[idx]
-        frames = [os.path.join(video_path, frame) for frame in os.listdir(video_path) if frame.endswith('.jpg') or frame.endswith('.png')]
+        frames = [
+            os.path.join(video_path, frame)
+            for frame in os.listdir(video_path)
+            if frame.endswith(".jpg") or frame.endswith(".png")
+        ]
         frames.sort()  # Ensure frames are in order
 
         # Load frames
@@ -157,9 +344,6 @@ class TaskLoader(Dataset):
         labels = self.labels[video_path]
 
         return torch.stack(images), labels
-
-
-
 
 
 # class IXIDataset(Randomizable, CacheDataset):
