@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
+
 # class CNN_RNN_Model(nn.Module):
 #     def __init__(self, num_classes, hidden_size, num_layers, bidirectional=False):
 #         super(CNN_RNN_Model, self).__init__()
@@ -66,6 +67,7 @@ class CNN_RNN_Model(nn.Module):
         # so we multiply the hidden size by 2 for the input size to the fully connected layer.
         rnn_output_size = hidden_size * 2 if bidirectional else hidden_size
         self.fc = nn.Linear(rnn_output_size, num_classes)
+        self.softmax = nn.Softmax(dim=2)
         
     def forward(self, x):
         # x is of shape (batch_size, sequence_length, C, H, W)
@@ -89,5 +91,8 @@ class CNN_RNN_Model(nn.Module):
         
         # out is of shape (batch_size, sequence_length, num_classes)
         # This gives a prediction for each frame in the sequence
+
+        # TODO: Add a softmax layer here
+        out = self.softmax(out)
         return out
 

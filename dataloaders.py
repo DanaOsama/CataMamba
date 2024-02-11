@@ -15,6 +15,8 @@ import pandas as pd
 from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader
+import torch.nn.functional as F
+
 
 # from torchvision import transforms
 from torchvision.transforms import v2
@@ -59,9 +61,10 @@ class Cataracts_101_21_v2(Dataset):
         json_path,
         dataset_name,
         split,
-        num_clips,
-        clip_size,
-        step_size,
+        num_classes=10,
+        num_clips=2,
+        clip_size=16,
+        step_size=2,
         transform=None,
     ):
         """
@@ -70,6 +73,7 @@ class Cataracts_101_21_v2(Dataset):
         - json_path (string): Path to the JSON file with video paths and labels.
         - dataset_name (string): Name of the dataset to load. Either: "1_Cataracts-21" or "2_Cataracts-101".
         - split (string): Split of the dataset to load. Either: "Train", "Validation", or "Test".
+        - num_classes (int): Number of classes in the dataset.
         - num_clips (int): Number of clips to sample from each video.
         - clip_size (int): Number of frames in each clip.
         - step_size (int): Number of frames to skip when sampling clips.
@@ -79,6 +83,7 @@ class Cataracts_101_21_v2(Dataset):
         self.json_path = json_path
         self.dataset_name = dataset_name
         self.split = split
+        self.num_classes = num_classes
         self.num_clips = num_clips
         self.clip_size = clip_size
         self.step_size = step_size
@@ -201,11 +206,16 @@ class Cataracts_101_21_v2(Dataset):
                           ((self.num_clips * self.clip_size) - len(images)))
         
         labels = torch.tensor(selected_frames["Phase"].values)
+        if (min([int(element) for element in self.label_to_class.keys()]) == 1):
+            labels = labels - 1
+
+        # Convert labels to one-hot encoded format
+        labels = F.one_hot(labels, num_classes=self.num_classes)
 
         # Stack images to create a batch-like tensor for all frames in the video
         images = torch.stack(images, dim=0)
 
-        print("Labels: ", labels)
+        # print("Labels: ", labels)
         return images, labels
 
 

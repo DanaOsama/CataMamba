@@ -34,15 +34,10 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
     running_loss = 0.0
     for inputs, labels in tqdm(train_loader):
         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE) # move data to device
-        
         optimizer.zero_grad()  # Zero the gradients
-        
-        # Forward pass
-        print("SHAPE OF INPUTS: ",inputs.shape)
+        labels = labels.float()
         predictions = model(inputs)
-        print(predictions.shape)
-        print("Predictions: ", predictions)
-        print(labels.shape)
+
         loss = criterion(predictions, labels)
         
         # Backpropagation and optimization
@@ -52,15 +47,58 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
         running_loss += loss.item()
     return running_loss / len(train_loader)
 
-def validate(model, val_loader, DEVICE):
+# def validate(model, val_loader, DEVICE):
+#     model.eval()  # Set the model to evaluation mode
+#     correct = 0
+#     total = 0
+#     with torch.no_grad():
+#         for inputs, labels in tqdm(val_loader):
+#             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
+#             labels = labels.float()
+
+#             outputs = model(inputs)
+#             _, predicted = torch.max(outputs.data, 1)
+#             total += labels.size(0)
+#             print("predicted size:", predicted.size())
+#             print("labels size:", labels.size())
+#             correct += (predicted == labels).sum().item()
+#     return correct/total * 100
+
+
+def validate(model, validation_loader, DEVICE):
     model.eval()  # Set the model to evaluation mode
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for inputs, labels in tqdm(val_loader):
-            inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
-            outputs = model(inputs)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    return correct/total * 100
+    total_correct = 0
+    total_frames = 0
+
+    with torch.no_grad():  # No need to track gradients during validation
+        for data, labels in tqdm(validation_loader):
+            data, labels = data.to(DEVICE), labels.to(DEVICE)
+            
+            # Forward pass: compute the model output
+            outputs = model(data)
+            
+            # Convert outputs to probabilities
+            # Assuming outputs are raw scores (logits), use softmax for multi-class classification
+            # TODO: Check the softmax thing
+            # probabilities = torch.softmax(outputs, dim=-1)
+            
+            # Convert probabilities to predicted class indices
+            _, predicted_indices = torch.max(outputs, dim=-1)
+            
+            # Convert one-hot encoded labels to class indices for comparison
+            _, labels_indices = torch.max(labels, dim=-1)
+            
+            # Calculate accuracy
+            correct = (predicted_indices == labels_indices).sum().item()
+            total_correct += correct
+            total_frames += labels.size(0) * labels.size(1)  # Multiply batch size by sequence length
+
+    accuracy = total_correct / total_frames
+    print(f'Validation Accuracy: {accuracy:.4f}')
+    return accuracy
+
+# Example usage:
+# model = YourModel(...)
+# validation_dataset = YourDataset(...)
+# validation_loader = DataLoader(validation_dataset, batch_size=32, shuffle=False)
+# validate_model(model, validation_loader, device='cuda' or 'cpu')
