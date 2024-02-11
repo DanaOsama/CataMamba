@@ -93,7 +93,6 @@ class Cataracts_101_21_v2(Dataset):
             # Loading the csv file for label-to-class mapping
             path = os.path.join(root_dir, "Cataracts_Multitask/2_Cataracts-101/phases.csv")
             label_to_class = pd.read_csv(path)
-            print("Label to class: ", label_to_class.columns)
             self.label_to_class = dict(zip(label_to_class['Phase'], label_to_class['Meaning']))
 
             # Load some extra information about the videos for Cataracts-101
@@ -203,11 +202,11 @@ class Cataracts_101_21_v2(Dataset):
         
         labels = torch.tensor(selected_frames["Phase"].values)
 
+        # Stack images to create a batch-like tensor for all frames in the video
+        images = torch.stack(images, dim=0)
+
+        print("Labels: ", labels)
         return images, labels
-
-
-
-
 
 
 class Cataracts_101_21(Dataset):
