@@ -213,7 +213,11 @@ class Cataracts_101_21_v2(Dataset):
         labels = F.one_hot(labels, num_classes=self.num_classes)
 
         # Stack images to create a batch-like tensor for all frames in the video
-        images = torch.stack(images, dim=0)
+        # TODO: Change the line below for when num_clips = -1.
+        if self.num_clips == -1:
+            images = torch.cat(images, dim=0)
+        else:
+            images = torch.stack(images, dim=0)
 
         # print("Labels: ", labels)
         return images, labels
