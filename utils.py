@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from tqdm import tqdm
 from torchvision import models
 from sklearn.metrics import (
@@ -101,7 +102,12 @@ def validate_all_metrics(model, validation_loader, DEVICE, num_classes):
 
             # Forward pass: compute the model output
             outputs = model(data)
-
+            # print("outputs.shape: ", outputs.shape)
+            # print("labels.shape: ", labels.shape)
+            # print()
+            # print("labels:")
+            # print(labels)
+            # print()
             # Convert probabilities to predicted class indices
             _, predicted_indices = torch.max(outputs, dim=-1)
             all_predicted.extend(predicted_indices.cpu().numpy())
@@ -110,35 +116,34 @@ def validate_all_metrics(model, validation_loader, DEVICE, num_classes):
             _, labels_indices = torch.max(labels, dim=-1)
             all_labels.extend(labels_indices.cpu().numpy())
 
+            # print("predicted_indices.shape:", predicted_indices.shape)
+            # print("labels_indices.shape:", labels_indices.shape)
+    
+    all_predicted = np.vstack(all_predicted)
+    all_labels = np.vstack(all_labels)
+
+    all_predicted = all_predicted.flatten()
+    all_labels = all_labels.flatten()
+
+    # print("all_predicted.shape:", all_predicted.shape)
+    # print("all_labels.shape:", all_labels.shape)
+
     # Calculate metrics
     precision = precision_score(all_labels, all_predicted, average="macro")
     recall = recall_score(all_labels, all_predicted, average="macro")
     f1 = f1_score(all_labels, all_predicted, average="macro")
     accuracy = accuracy_score(all_labels, all_predicted)
 
-    # For AUC-ROC, we need to binarize the labels for multiclass
-    # https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.label_binarize.html#:~:text=Binarize%20labels%20in%20a%20one,one%2Dvs%2Dall%20scheme.
-    # label_binarize: Binarize labels in a one-vs-all fashion.
-    labels_binarized = label_binarize(all_labels, classes=range(num_classes))
-    # For AUC, ensure outputs are probabilities and use one-vs-rest approach
-    # This requires model outputs saved as probabilities for each class
-    if hasattr(model, "softmax"):
-        probabilities = [model.softmax(output) for output in outputs]
-    else:
-        probabilities = torch.softmax(outputs, dim=1).cpu().numpy()
-    auc_roc = roc_auc_score(labels_binarized, probabilities, multi_class="ovr")
 
     print(f"Validation Precision: {precision:.4f}")
     print(f"Validation Recall: {recall:.4f}")
     print(f"Validation F1: {f1:.4f}")
-    print(f"Validation AUC-ROC: {auc_roc:.4f}")
 
     metrics = {
         "accuracy": accuracy,
         "precision": precision,
         "recall": recall,
         "f1_score": f1_score,
-        "auc_roc": auc_roc,
     }
 
     return metrics
