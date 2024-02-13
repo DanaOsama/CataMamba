@@ -186,3 +186,92 @@ FileNotFoundError: [Errno 2] No such file or directory: 'conda'
 2024-02-13 23:42:46,136 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
 2024-02-13 23:42:48,422 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
 2024-02-13 23:42:52,032 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:42:53,683 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:42:58,036 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:42:59,009 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:00,995 DEBUG   SenderThread:1320638 [sender.py:send():382] send: stats
+2024-02-13 23:43:01,134 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-13 23:43:01,135 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: stop_status
+2024-02-13 23:43:01,137 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-13 23:43:04,386 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:06,064 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:43:07,949 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: partial_history
+2024-02-13 23:43:07,951 DEBUG   SenderThread:1320638 [sender.py:send():382] send: history
+2024-02-13 23:43:07,951 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: summary_record
+2024-02-13 23:43:07,952 INFO    SenderThread:1320638 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-02-13 23:43:08,066 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_created():271] file/dir created: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/wandb-summary.json
+2024-02-13 23:43:09,953 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:10,068 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:43:15,025 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:16,075 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:43:16,134 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-13 23:43:16,134 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: stop_status
+2024-02-13 23:43:16,136 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-13 23:43:20,455 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:24,081 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:43:25,487 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:30,488 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:30,997 DEBUG   SenderThread:1320638 [sender.py:send():382] send: stats
+2024-02-13 23:43:31,134 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-13 23:43:31,135 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: stop_status
+2024-02-13 23:43:31,137 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-13 23:43:34,088 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:43:36,199 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:41,582 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:42,094 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:43:46,134 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-13 23:43:46,135 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: stop_status
+2024-02-13 23:43:46,138 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-13 23:43:47,450 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:50,664 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: partial_history
+2024-02-13 23:43:50,665 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: partial_history
+2024-02-13 23:43:50,665 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: partial_history
+2024-02-13 23:43:50,666 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: partial_history
+2024-02-13 23:43:50,666 DEBUG   SenderThread:1320638 [sender.py:send():382] send: history
+2024-02-13 23:43:50,667 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: summary_record
+2024-02-13 23:43:50,669 INFO    SenderThread:1320638 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-02-13 23:43:50,669 DEBUG   SenderThread:1320638 [sender.py:send():382] send: history
+2024-02-13 23:43:50,669 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: summary_record
+2024-02-13 23:43:50,670 INFO    SenderThread:1320638 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-02-13 23:43:50,670 DEBUG   SenderThread:1320638 [sender.py:send():382] send: history
+2024-02-13 23:43:50,670 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: summary_record
+2024-02-13 23:43:50,671 INFO    SenderThread:1320638 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-02-13 23:43:50,671 DEBUG   SenderThread:1320638 [sender.py:send():382] send: history
+2024-02-13 23:43:50,672 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: summary_record
+2024-02-13 23:43:50,672 INFO    SenderThread:1320638 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-02-13 23:43:51,132 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/wandb-summary.json
+2024-02-13 23:43:52,133 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:43:53,401 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:43:54,134 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:43:58,402 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:01,002 DEBUG   SenderThread:1320638 [sender.py:send():382] send: stats
+2024-02-13 23:44:01,134 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-13 23:44:01,135 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: stop_status
+2024-02-13 23:44:01,137 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-13 23:44:03,708 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:04,142 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:44:08,709 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:12,150 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:44:14,085 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:16,135 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-13 23:44:16,135 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: stop_status
+2024-02-13 23:44:16,135 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-13 23:44:16,152 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:44:19,431 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:22,157 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:44:25,223 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:30,224 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:31,009 DEBUG   SenderThread:1320638 [sender.py:send():382] send: stats
+2024-02-13 23:44:31,135 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-13 23:44:31,135 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-13 23:44:31,136 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: stop_status
+2024-02-13 23:44:32,164 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:44:35,448 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:40,448 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:44,192 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:44:45,948 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
+2024-02-13 23:44:46,135 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-13 23:44:46,136 DEBUG   SenderThread:1320638 [sender.py:send_request():409] send_request: stop_status
+2024-02-13 23:44:46,138 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-13 23:44:50,196 INFO    Thread-12 :1320638 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/dana.mohamed/Cataracts_Multi-task/wandb/run-20240213_233859-ucihd7fk/files/output.log
+2024-02-13 23:44:51,429 DEBUG   HandlerThread:1320638 [handler.py:handle_request():146] handle_request: status_report
