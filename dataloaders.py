@@ -163,6 +163,7 @@ class Cataracts_101_21_v2(Dataset):
         num_frames = len(annotations)
         assert num_frames > 0
 
+        # TODO: Add better support for when the whole video is used, i.e. num_clips = -1
         if self.num_clips != -1:
             required_num_frames = self.clip_size * self.num_clips * self.step_size
         else:
@@ -213,7 +214,6 @@ class Cataracts_101_21_v2(Dataset):
         labels = F.one_hot(labels, num_classes=self.num_classes)
 
         # Stack images to create a batch-like tensor for all frames in the video
-        # TODO: Change the line below for when num_clips = -1.
         if self.num_clips == -1:
             images = torch.cat(images, dim=0)
         else:

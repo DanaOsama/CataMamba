@@ -48,9 +48,10 @@ import torchvision.models as models
 
 
 class CNN_RNN_Model(nn.Module):
-    def __init__(self, num_classes, hidden_size, num_layers, bidirectional=False):
+    def __init__(self, num_classes, hidden_size, num_clips, num_layers, bidirectional=False):
         super(CNN_RNN_Model, self).__init__()
-        
+
+        self.num_clips = num_clips
         # Load a pre-trained CNN model
         self.cnn = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
         
@@ -72,6 +73,15 @@ class CNN_RNN_Model(nn.Module):
     def forward(self, x):
         # x is of shape (batch_size, sequence_length, C, H, W)
         batch_size, sequence_length, C, H, W = x.size()
+
+        # TODO: Still need to add support for when the whole video is used
+        
+        # if self.num_clips != -1:
+        #     batch_size, sequence_length, C, H, W = x.size()
+        
+        # else:
+        #     sequence_length, C, H, W = x.size()
+        #     batch_size = 1
         
         # Process each frame through the CNN
         # Flatten the first two dimensions to treat each frame as independent

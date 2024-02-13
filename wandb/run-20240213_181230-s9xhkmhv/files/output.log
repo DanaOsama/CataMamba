@@ -1,0 +1,28 @@
+
+  0%|                                                                                                | 0/41 [00:00<?, ?it/s]
+[INFO] number of parameters in the model: 13282890
+  0%|                                                                                                | 0/41 [00:13<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/dana.mohamed/Cataracts_Multi-task/train.py", line 163, in <module>
+    print("[INFO] starting training epoch {}".format(str(epoch+1)))
+  File "/home/dana.mohamed/Cataracts_Multi-task/utils.py", line 47, in train
+    for inputs, labels in tqdm(train_loader):
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/tqdm/std.py", line 1181, in __iter__
+    for obj in iterable:
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 675, in _next_data
+    data = self._dataset_fetcher.fetch(index)  # may raise StopIteration
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 54, in fetch
+    return self.collate_fn(data)
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/utils/data/_utils/collate.py", line 277, in default_collate
+    return collate(batch, collate_fn_map=default_collate_fn_map)
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/utils/data/_utils/collate.py", line 144, in collate
+    return [collate(samples, collate_fn_map=collate_fn_map) for samples in transposed]  # Backwards compatibility.
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/utils/data/_utils/collate.py", line 144, in <listcomp>
+    return [collate(samples, collate_fn_map=collate_fn_map) for samples in transposed]  # Backwards compatibility.
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/utils/data/_utils/collate.py", line 121, in collate
+    return collate_fn_map[elem_type](batch, collate_fn_map=collate_fn_map)
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/utils/data/_utils/collate.py", line 174, in collate_tensor_fn
+    return torch.stack(batch, 0, out=out)
+RuntimeError: stack expects each tensor to be equal size, but got [321, 224, 224] at entry 0 and [318, 224, 224] at entry 1

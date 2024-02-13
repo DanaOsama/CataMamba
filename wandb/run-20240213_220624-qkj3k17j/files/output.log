@@ -1,0 +1,15 @@
+[INFO] number of parameters in the model: 13282890
+[INFO] starting training epoch 1
+  0%|                                                                                                | 0/81 [00:09<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/dana.mohamed/Cataracts_Multi-task/train.py", line 164, in <module>
+    loss = train(model, optimizer, criterion, train_loader, DEVICE)
+  File "/home/dana.mohamed/Cataracts_Multi-task/utils.py", line 50, in train
+    predictions = model(inputs)
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dana.mohamed/.conda/envs/multitask/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dana.mohamed/Cataracts_Multi-task/models/cnn_rnn.py", line 74, in forward
+    batch_size, sequence_length, C, H, W = x.size()
+ValueError: not enough values to unpack (expected 5, got 4)
