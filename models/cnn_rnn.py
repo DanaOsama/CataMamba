@@ -81,17 +81,6 @@ class CNN_RNN_Model(nn.Module):
 
         batch_size, sequence_length, C, H, W = x.size()
 
-        # TODO: Still need to add support for when the whole video is used
-        
-        # if self.num_clips != -1:
-        #     batch_size, sequence_length, C, H, W = x.size()
-        
-        # else:
-        #     sequence_length, C, H, W = x.size()
-        #     batch_size = 1
-        
-        # Process each frame through the CNN
-        # Flatten the first two dimensions to treat each frame as independent
         x = x.view(batch_size * sequence_length, C, H, W)
         cnn_out = self.cnn(x)
         
@@ -111,4 +100,3 @@ class CNN_RNN_Model(nn.Module):
 
         out = self.softmax(out)
         return out
-

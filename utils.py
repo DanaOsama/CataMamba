@@ -47,7 +47,7 @@ def custom_collate(batch):
     # print("batch:", batch)
     # print("batch[0]:", batch[0])
     # print("batch[0][0]:", batch[0][0])
-    breakpoint()
+    # breakpoint()
     inputs, labels = zip(*batch)
     
     # # Convert inputs to a tensor if they are of the same size
@@ -89,15 +89,6 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
     model.train()  # Set the model to training mode
     running_loss = 0.0
     for inputs, labels in tqdm(train_loader):
-    # for batch in tqdm(train_loader):
-        # print(batch)
-        # inputs, labels = batch
-        print("type(inputs): ", type(inputs))
-        print("type(labels): ", type(labels))
-        # print("type(inputs[0]): ", type(inputs[0]))
-        # print("type(labels[0]): ", type(labels[0]))
-        # print("inputs[0].shape: ", inputs[0].shape)
-        # print("labels[0].shape: ", labels[0].shape)
         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
         optimizer.zero_grad()  # Zero the gradients
         labels = labels.float()
@@ -132,11 +123,14 @@ def validate(model, validation_loader, DEVICE):
             _, labels_indices = torch.max(labels, dim=-1)
             all_labels.extend(labels_indices.cpu().numpy())
 
-    all_predicted = np.vstack(all_predicted)
-    all_labels = np.vstack(all_labels)
+    all_predicted = np.concatenate(all_predicted)
+    all_labels = np.concatenate(all_labels)
 
-    all_predicted = all_predicted.flatten()
-    all_labels = all_labels.flatten()
+    # all_predicted = np.vstack(all_predicted)
+    # all_labels = np.vstack(all_labels)
+
+    # all_predicted = all_predicted.flatten()
+    # all_labels = all_labels.flatten()
 
     # Calculate metrics
     precision = precision_score(all_labels, all_predicted, zero_division=0, average="macro")

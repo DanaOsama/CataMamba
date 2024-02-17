@@ -229,8 +229,8 @@ class Cataracts_101_21_v2(Dataset):
 
         images = torch.cat(images, dim=0)
 
-        print("images.shape:", images.shape)
-        print("labels.shape:", labels.shape)
+        # print("images.shape:", images.shape)
+        # print("labels.shape:", labels.shape)
         return images, labels
 
 
