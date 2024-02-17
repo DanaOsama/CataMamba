@@ -22,22 +22,8 @@ import torch.nn.functional as F
 from torchvision.transforms import v2
 import re
 
-
-"""
-All Dataset classes receive the split from the JSON file
-
-For Cataracts101, the usage looks like this:
-json_path = "2_NEW_dataset_level_labels.json"
-# Opening JSON file
-f = open(json_path)
-
-# returns JSON object as a dictionary
-data = json.load(f)
-data = data['Train']['2_Cataracts-101']
-
-How would this framework fit within a healthcare workflow?
-"""
-
+# Set numpy random seed for reproducibility
+np.random.seed(0)
 
 def extract_frame_number(filename):
     # The regex pattern \d+ matches one or more digits
@@ -93,6 +79,10 @@ class Cataracts_101_21_v2(Dataset):
         # self.csv_files = []
         self.data = self._load_data()
 
+        video_ids = []
+        for d in self.data:
+            video_ids.append(int(d['Video_ID']))
+
         # Loading some extra information for the Cataracts-101 dataset
         if self.dataset_name == "2_Cataracts-101":
             # Loading the csv file for label-to-class mapping
@@ -104,6 +94,7 @@ class Cataracts_101_21_v2(Dataset):
             extra_info_csv = "Cataracts_Multitask/2_Cataracts-101/videos.csv"
             path = os.path.join(root_dir, extra_info_csv)
             video_extra_info = pd.read_csv(path)
+            video_extra_info = video_extra_info[video_extra_info['VideoID'].isin(video_ids)]
 
             # Sort the videos by VideoID
             video_extra_info.sort_values(by="VideoID", inplace=True)
@@ -188,38 +179,46 @@ class Cataracts_101_21_v2(Dataset):
             frame_path = folder_path + f"frame_{frame_number}.jpg"
             image = Image.open(frame_path)
             # transform the image to tensor
-            # image = v2.ToTensor()(image)
+            # TODO: Check why am I doing ToImage again
             transforms = v2.Compose(
-                [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+                [v2.ToDtype(torch.float32, scale=True)]
             )
+            # transforms = v2.Compose(
+            #     [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+            # )
             image = transforms(image)
 
             if self.transform:
                 image = self.transform(image)
+            
+            image = image.unsqueeze(0)
             images.append(image)
+        
+        labels = selected_frames.drop(columns=["FrameNo"])
+        labels = pd.get_dummies(labels, columns=['Phase'], drop_first=False)
+        labels = torch.tensor(labels.values)
+
 
         # Pad the images if the number of frames is less than the required number of frames
         # The padding is done by repeating the last frame
             # This line (self.num_clips * self.clip_size) - len(images) 
             # calculates the number of frames to pad
+        # TODO: Double check logic when using large numbers for clip_size and num_clips
+        # TODO: Padding: repeat last frame or insert blank frames (frame of zeros)
         if len(images) < (self.num_clips * self.clip_size):
             images.extend([images[-1]] *
                           ((self.num_clips * self.clip_size) - len(images)))
-        
-        labels = torch.tensor(selected_frames["Phase"].values)
-        if (min([int(element) for element in self.label_to_class.keys()]) == 1):
-            labels = labels - 1
-
-        # Convert labels to one-hot encoded format
-        labels = F.one_hot(labels, num_classes=self.num_classes)
+            labels = torch.cat([labels, labels[-1].repeat(
+                ((self.num_clips * self.clip_size) - len(labels), 1))])
 
         # Stack images to create a batch-like tensor for all frames in the video
-        if self.num_clips == -1:
-            images = torch.cat(images, dim=0)
-        else:
-            images = torch.stack(images, dim=0)
+        # print("images[0].shape:", images[0].shape)
+        # print("images[1].shape:", images[1].shape)
 
-        # print("Labels: ", labels)
+        images = torch.cat(images, dim=0)
+
+        # print("images.shape:", images.shape)
+        # print("labels.shape:", labels.shape)
         return images, labels
 
 

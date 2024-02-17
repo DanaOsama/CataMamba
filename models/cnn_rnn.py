@@ -66,12 +66,19 @@ class CNN_RNN_Model(nn.Module):
         # Adjust the final fully connected layer to output predictions for each time step
         # If the RNN is bidirectional, it concatenates the hidden states from both directions,
         # so we multiply the hidden size by 2 for the input size to the fully connected layer.
+        # TODO: Check if bidirectional is looking at the future or the past
         rnn_output_size = hidden_size * 2 if bidirectional else hidden_size
         self.fc = nn.Linear(rnn_output_size, num_classes)
         self.softmax = nn.Softmax(dim=2)
         
     def forward(self, x):
         # x is of shape (batch_size, sequence_length, C, H, W)
+        # TODO: check length of x.size itself to determine how many variables to unpack
+        # if len(x.size()) == 4 :
+        #     batch_size, C, H, W = x[None, ...].size()
+        # else:
+        #     batch_size, sequence_length, C, H, W = x.size()
+
         batch_size, sequence_length, C, H, W = x.size()
 
         # TODO: Still need to add support for when the whole video is used
@@ -102,7 +109,6 @@ class CNN_RNN_Model(nn.Module):
         # out is of shape (batch_size, sequence_length, num_classes)
         # This gives a prediction for each frame in the sequence
 
-        # TODO: Add a softmax layer here
         out = self.softmax(out)
         return out
 

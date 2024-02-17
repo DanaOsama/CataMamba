@@ -11,4 +11,6 @@
 #SBATCH --qos=gpu-8                 # To enable the use of up to 8 GPUs
 
 
-sh scripts/prompt_align/tpt_align_4e2.sh fgvc_aircraft 2 PUG_Worlds
+cd Cataracts_Multi-task
+conda activate multitask
+python train.py

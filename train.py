@@ -28,7 +28,7 @@ parser.add_argument("--num_classes", type=int, help="Number of classes, default=
 parser.add_argument("--root_dir", type=str, help="Path containing the downloaded dataset folder Cataracts_Multitask", default="/l/users/dana.mohamed")
 parser.add_argument("--json_path", type=str, help="Path to the json file containing the dataset labels", default="/home/dana.mohamed/MultiTask_Video_Data_Preprocessing/2_NEW_dataset_level_labels.json")
 parser.add_argument("--checkpoint_path", type=str, help="Path to save and load the model checkpoints", default="/l/users/dana.mohamed/checkpoints/")
-parser.add_argument("--num_clips", type=int, help="Number of clips to sample from each video", default=4)
+parser.add_argument("--num_clips", type=int, help="Number of clips to sample from each video", default=-1)
 parser.add_argument("--clip_size", type=int, help="Number of frames in each clip", default=20)
 parser.add_argument("--step_size", type=int, help="Number of frames to skip when sampling clips", default=2)
 parser.add_argument("--learning_rate", type=float, help="Learning rate for the optimizer", default=0.001)

@@ -26,6 +26,43 @@ from sklearn.metrics import (
     
 #     return data_padded, labels
 
+# def custom_collate(batch):
+#     """
+#     Function from:
+#     https://github.com/pytorch/vision/blob/master/references/detection/utils.py
+ 
+#     Args:
+#         batch ([type]): [description]
+ 
+#     Returns:
+#         [type]: [description]
+#     """
+#     inputs, labels = zip(*batch)
+#     return inputs, labels
+
+import torch
+
+def custom_collate(batch):
+    # print("batch length: ", len(batch))
+    # print("batch:", batch)
+    # print("batch[0]:", batch[0])
+    # print("batch[0][0]:", batch[0][0])
+    breakpoint()
+    inputs, labels = zip(*batch)
+    
+    # # Convert inputs to a tensor if they are of the same size
+    # # This is common for fixed-size inputs, e.g., images of the same dimensions
+    # # breakpoint()
+    # inputs = torch.cat(inputs, dim=0)
+    
+    # # Assuming labels are numeric and can be directly converted
+    # # This might need to be adjusted based on your specific use case
+    # labels = torch.tensor(labels, dtype=torch.float32)
+    
+    return inputs, labels
+
+
+
 def save_checkpoint(model, optimizer, epoch, path, best=False):
     checkpoint = {
         "epoch": epoch,
@@ -52,6 +89,15 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
     model.train()  # Set the model to training mode
     running_loss = 0.0
     for inputs, labels in tqdm(train_loader):
+    # for batch in tqdm(train_loader):
+        # print(batch)
+        # inputs, labels = batch
+        print("type(inputs): ", type(inputs))
+        print("type(labels): ", type(labels))
+        # print("type(inputs[0]): ", type(inputs[0]))
+        # print("type(labels[0]): ", type(labels[0]))
+        # print("inputs[0].shape: ", inputs[0].shape)
+        # print("labels[0].shape: ", labels[0].shape)
         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
         optimizer.zero_grad()  # Zero the gradients
         labels = labels.float()
