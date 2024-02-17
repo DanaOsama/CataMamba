@@ -180,12 +180,12 @@ class Cataracts_101_21_v2(Dataset):
             image = Image.open(frame_path)
             # transform the image to tensor
             # TODO: Check why am I doing ToImage again
-            transforms = v2.Compose(
-                [v2.ToDtype(torch.float32, scale=True)]
-            )
             # transforms = v2.Compose(
-            #     [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+            #     [v2.ToDtype(torch.float32, scale=True)]
             # )
+            transforms = v2.Compose(
+                [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+            )
             image = transforms(image)
 
             if self.transform:
@@ -194,9 +194,21 @@ class Cataracts_101_21_v2(Dataset):
             image = image.unsqueeze(0)
             images.append(image)
         
-        labels = selected_frames.drop(columns=["FrameNo"])
-        labels = pd.get_dummies(labels, columns=['Phase'], drop_first=False)
-        labels = torch.tensor(labels.values)
+        # print("annotations.columns:", annotations.columns)
+        # print("selected_frames.columns:", selected_frames.columns)
+        # labels = selected_frames.drop(columns=["FrameNo"])
+        # labels = pd.get_dummies(labels, columns=['Phase'], drop_first=False)
+        # print("labels.columns:", labels.columns)
+        # labels = torch.tensor(labels.values)
+        # print("labels.shape:", labels.shape)
+
+        labels = torch.tensor(selected_frames["Phase"].values)
+        if (min([int(element) for element in self.label_to_class.keys()]) == 1):
+            labels = labels - 1
+
+        # Convert labels to one-hot encoded format
+        labels = F.one_hot(labels, num_classes=self.num_classes)
+
 
 
         # Pad the images if the number of frames is less than the required number of frames
@@ -217,8 +229,8 @@ class Cataracts_101_21_v2(Dataset):
 
         images = torch.cat(images, dim=0)
 
-        # print("images.shape:", images.shape)
-        # print("labels.shape:", labels.shape)
+        print("images.shape:", images.shape)
+        print("labels.shape:", labels.shape)
         return images, labels
 
 
