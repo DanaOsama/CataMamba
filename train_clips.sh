@@ -10,7 +10,12 @@
 #SBATCH --time=12:00:00             # Specify the time needed for your experiment
 #SBATCH --qos=gpu-8                 # To enable the use of up to 8 GPUs
 
+# parser.add_argument("--num_classes", type=int, help="Number of classes, default=10", default=10)
+# parser.add_argument("--num_clips", type=int, help="Number of clips to sample from each video", default=2)
+# parser.add_argument("--clip_size", type=int, help="Number of frames in each clip", default=20)
+# parser.add_argument("--step_size", type=int, help="Number of frames to skip when sampling clips", default=1)
+
 
 cd Cataracts_Multi-task/
 conda activate multitask # name of the conda environment
-python train.py --num_clips -1 --epochs 50 
+python train.py --num_clips 8 --epochs 50 --clip_size 20 --step_size 1

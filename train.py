@@ -23,20 +23,22 @@ parser = argparse.ArgumentParser(description="MultiTask Cataracts Training Scrip
 
 # Define command-line arguments
 # TODO: Load them from a config.json file later on
-# TODO: Arrange the arguments in a better way
-parser.add_argument("--num_classes", type=int, help="Number of classes, default=10", default=10)
 parser.add_argument("--root_dir", type=str, help="Path containing the downloaded dataset folder Cataracts_Multitask", default="/l/users/dana.mohamed")
 parser.add_argument("--json_path", type=str, help="Path to the json file containing the dataset labels", default="/home/dana.mohamed/MultiTask_Video_Data_Preprocessing/2_NEW_dataset_level_labels.json")
 parser.add_argument("--checkpoint_path", type=str, help="Path to save and load the model checkpoints", default="/l/users/dana.mohamed/checkpoints/")
-parser.add_argument("--num_clips", type=int, help="Number of clips to sample from each video", default=2)
+                    
+parser.add_argument("--num_classes", type=int, help="Number of classes, default=10", default=10)
+parser.add_argument("--num_clips", type=int, help="Number of clips to sample from each video", default=-1)
 parser.add_argument("--clip_size", type=int, help="Number of frames in each clip", default=20)
 parser.add_argument("--step_size", type=int, help="Number of frames to skip when sampling clips", default=1)
+
 parser.add_argument("--learning_rate", type=float, help="Learning rate for the optimizer", default=0.001)
 parser.add_argument("--epochs", type=int, help="Number of epochs for training the model", default=1)
 parser.add_argument("--batch_size", type=int, help="Batch size for training the model", default=1)
 parser.add_argument("--hidden_size", type=int, help="Hidden size for the RNN", default=512)
 parser.add_argument("--loss_function", type=str, help="Loss function to use for training the model", default="CrossEntropyLoss")
 parser.add_argument("--optimizer", type=str, help="Optimizer to use for training the model", default="Adam")
+
 parser.add_argument("--task", type=str, help="Task to train the model on", default="Phase_detection")
 parser.add_argument("--dataset", type=str, help="Dataset to train the model on", default="2_Cataracts-101")
 parser.add_argument("--model", type=str, help="Model to use for training", default="CNN_RNN")
