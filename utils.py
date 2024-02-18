@@ -12,57 +12,6 @@ from sklearn.metrics import (
     accuracy_score,
 )
 
-# def custom_collate(batch):
-#     # Example for padding sequence data
-#     # Extract data and labels
-#     data = [item[0] for item in batch]
-#     labels = [item[1] for item in batch]
-    
-#     # Pad data
-#     data_padded = pad_sequence(data, batch_first=True)
-    
-#     # Use default_collate for the labels or other fixed-size items
-#     labels = default_collate(labels)
-    
-#     return data_padded, labels
-
-# def custom_collate(batch):
-#     """
-#     Function from:
-#     https://github.com/pytorch/vision/blob/master/references/detection/utils.py
- 
-#     Args:
-#         batch ([type]): [description]
- 
-#     Returns:
-#         [type]: [description]
-#     """
-#     inputs, labels = zip(*batch)
-#     return inputs, labels
-
-import torch
-
-def custom_collate(batch):
-    # print("batch length: ", len(batch))
-    # print("batch:", batch)
-    # print("batch[0]:", batch[0])
-    # print("batch[0][0]:", batch[0][0])
-    # breakpoint()
-    inputs, labels = zip(*batch)
-    
-    # # Convert inputs to a tensor if they are of the same size
-    # # This is common for fixed-size inputs, e.g., images of the same dimensions
-    # # breakpoint()
-    # inputs = torch.cat(inputs, dim=0)
-    
-    # # Assuming labels are numeric and can be directly converted
-    # # This might need to be adjusted based on your specific use case
-    # labels = torch.tensor(labels, dtype=torch.float32)
-    
-    return inputs, labels
-
-
-
 def save_checkpoint(model, optimizer, epoch, path, best=False):
     checkpoint = {
         "epoch": epoch,
@@ -114,9 +63,8 @@ def validate(model, validation_loader, DEVICE):
 
             # Forward pass: compute the model output
             outputs = model(data)
+            _, predicted_indices = torch.max(outputs, 2)
 
-            # Convert probabilities to predicted class indices
-            _, predicted_indices = torch.max(outputs, dim=-1)
             all_predicted.extend(predicted_indices.cpu().numpy())
 
             # Convert one-hot encoded labels to class indices for comparison
@@ -125,12 +73,6 @@ def validate(model, validation_loader, DEVICE):
 
     all_predicted = np.concatenate(all_predicted)
     all_labels = np.concatenate(all_labels)
-
-    # all_predicted = np.vstack(all_predicted)
-    # all_labels = np.vstack(all_labels)
-
-    # all_predicted = all_predicted.flatten()
-    # all_labels = all_labels.flatten()
 
     # Calculate metrics
     precision = precision_score(all_labels, all_predicted, zero_division=0, average="macro")

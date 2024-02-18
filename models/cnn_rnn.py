@@ -2,51 +2,6 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
-
-# class CNN_RNN_Model(nn.Module):
-#     def __init__(self, num_classes, hidden_size, num_layers, bidirectional=False):
-#         super(CNN_RNN_Model, self).__init__()
-        
-#         # Load a pre-trained CNN model
-#         self.cnn = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
-        
-#         # Replace the classifier of the pre-trained model
-#         # Assuming the feature size output by the CNN is 512
-#         self.cnn.fc = nn.Identity()  # Use the CNN as a fixed feature extractor
-        
-#         # Define the RNN layer
-#         self.rnn = nn.LSTM(input_size=512, hidden_size=hidden_size,
-#                            num_layers=num_layers, batch_first=True,
-#                            bidirectional=bidirectional)
-        
-#         # Define the final fully connected layer
-#         self.fc = nn.Linear(hidden_size * 2 if bidirectional else hidden_size, num_classes)
-        
-#     def forward(self, x):
-#         # x is of shape (batch_size, sequence_length, C, H, W)
-#         batch_size, sequence_length, C, H, W = x.size()
-        
-#         # Flatten the first two dimensions to treat the entire batch as independent
-#         x = x.view(batch_size * sequence_length, C, H, W)
-        
-#         # Pass the input through the CNN
-#         cnn_out = self.cnn(x)
-        
-#         # Reshape the output to (batch_size, sequence_length, cnn_output_size)
-#         cnn_out = cnn_out.view(batch_size, sequence_length, -1)
-        
-#         # Pass the CNN's output to the RNN
-#         rnn_out, _ = self.rnn(cnn_out)
-        
-#         # Take the output of the last time step
-#         rnn_out = rnn_out[:, -1, :]
-        
-#         # Pass the RNN's output through the final fully connected layer
-#         out = self.fc(rnn_out)
-        
-#         return out
-
-
 class CNN_RNN_Model(nn.Module):
     def __init__(self, num_classes, hidden_size, num_clips, num_layers, bidirectional=False):
         super(CNN_RNN_Model, self).__init__()
@@ -72,12 +27,6 @@ class CNN_RNN_Model(nn.Module):
         self.softmax = nn.Softmax(dim=2)
         
     def forward(self, x):
-        # x is of shape (batch_size, sequence_length, C, H, W)
-        # TODO: check length of x.size itself to determine how many variables to unpack
-        # if len(x.size()) == 4 :
-        #     batch_size, C, H, W = x[None, ...].size()
-        # else:
-        #     batch_size, sequence_length, C, H, W = x.size()
 
         batch_size, sequence_length, C, H, W = x.size()
 
@@ -98,5 +47,5 @@ class CNN_RNN_Model(nn.Module):
         # out is of shape (batch_size, sequence_length, num_classes)
         # This gives a prediction for each frame in the sequence
 
-        out = self.softmax(out)
+        # out = self.softmax(out)
         return out
