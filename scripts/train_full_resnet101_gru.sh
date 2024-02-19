@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=test             # Job name
-#SBATCH --output=outputs/logs/full_video_train.%A_%a.txt   # Standard output and error log
+#SBATCH --output=outputs/logs/train_full_resnet101_gru.%A_%a.txt   # Standard output and error log
 #SBATCH --nodes=1                   # Run all processes on a single node    
 #SBATCH --ntasks=1                  # Run on a single CPU
 #SBATCH --mem=40G                   # Total RAM to be used
