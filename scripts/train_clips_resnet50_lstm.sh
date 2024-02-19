@@ -15,4 +15,6 @@ module load conda
 # module load cuda10.2/toolkit/10.2.89
 eval "$(conda shell.bash hook)"
 conda activate multitask # name of the conda environment
-python train.py --num_clips 8 --epochs 50 --clip_size 20 --step_size 1 --hidden_size 256
+
+# All defaults are correct
+python train.py 
