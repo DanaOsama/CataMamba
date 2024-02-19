@@ -2,21 +2,37 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
+CNN_models = {"resnet18": 512, "resnet50": 2048, "resnet101": 2048}
+
+
 class CNN_RNN_Model(nn.Module):
-    def __init__(self, num_classes, hidden_size, num_clips, num_layers, bidirectional=False):
+    def __init__(self, num_classes, hidden_size, num_clips, num_layers, cnn="resnet50", rnn="lstm", bidirectional=False):
         super(CNN_RNN_Model, self).__init__()
 
         self.num_clips = num_clips
         # Load a pre-trained CNN model
-        self.cnn = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        if cnn == "resnet18":
+            self.cnn = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        elif cnn == "resnet50":
+            self.cnn = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+        elif cnn == "resnet101":
+            self.cnn = models.resnet101(weights=models.ResNet101_Weights.DEFAULT)
+        else:
+            raise ValueError("Invalid CNN model name")
+
         
         # Replace the classifier of the pre-trained model
         self.cnn.fc = nn.Identity()  # Use the CNN as a fixed feature extractor
         
         # Define the RNN layer
-        self.rnn = nn.LSTM(input_size=512, hidden_size=hidden_size,
+        if rnn == "lstm":
+            self.rnn = nn.LSTM(input_size=CNN_models[cnn], hidden_size=hidden_size,
                            num_layers=num_layers, batch_first=True,
                            bidirectional=bidirectional)
+        elif rnn == "gru":
+            self.rnn = nn.GRU(input_size=CNN_models[cnn], hidden_size=hidden_size,
+                          num_layers=num_layers, batch_first=True,
+                          bidirectional=bidirectional)
         
         # Adjust the final fully connected layer to output predictions for each time step
         # If the RNN is bidirectional, it concatenates the hidden states from both directions,

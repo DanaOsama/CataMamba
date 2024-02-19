@@ -40,8 +40,11 @@ parser.add_argument("--loss_function", type=str, help="Loss function to use for 
 parser.add_argument("--optimizer", type=str, help="Optimizer to use for training the model", default="Adam")
 
 parser.add_argument("--task", type=str, help="Task to train the model on", default="Phase_detection")
-parser.add_argument("--dataset", type=str, help="Dataset to train the model on", default="2_Cataracts-101")
-parser.add_argument("--model", type=str, help="Model to use for training", default="CNN_RNN")
+parser.add_argument("--dataset", choices=['1_Cataracts-21', '2_Cataracts-101'], help="Dataset to train the model on", default="2_Cataracts-101")
+parser.add_argument("--architecture", choices=['CNN_RN'], help="Model to use for training", default="CNN_RNN")
+parser.add_argument("--cnn_model", choices=['resnet18', 'resnet50', 'resnet101'], help="CNN model to use for training", default="resnet50")
+parser.add_argument("--rnn_model", choices=['lstm', 'gru'], help="RNN model to use for training", default="lstm")
+parser.add_argument("--num_layers_rnn", type=int, help="Number of layers for the RNN", default=1)
 parser.add_argument("--bidirectional", type=bool, help="Whether to use a bidirectional RNN", default=False)
 
 # Parse the command-line arguments
@@ -60,8 +63,11 @@ batch_size = args.batch_size
 num_classes = args.num_classes
 hidden_size = args.hidden_size
 bidirectional = args.bidirectional
+num_layers_rnn = args.num_layers_rnn
+cnn_model = args.cnn_model
+rnn_model = args.rnn_model
 
-## Directories
+# Directories
 root_dir = args.root_dir
 json_path = args.json_path
 checkpoint_path = args.checkpoint_path
@@ -75,8 +81,8 @@ step_size = args.step_size
 
 
 # TODO: Add more processing for those two parameters
-model_name = args.model
-model = CNN_RNN_Model(num_classes=num_classes, hidden_size=hidden_size, num_clips=num_clips, num_layers=1, bidirectional=bidirectional) if model_name == "CNN_RNN" else None
+architecture = args.architecture
+model = CNN_RNN_Model(num_classes=num_classes, hidden_size=hidden_size, num_clips=num_clips, num_layers=num_layers_rnn, bidirectional=bidirectional) if architecture == "CNN_RNN" else None
 model.to(DEVICE)
 criterion = nn.CrossEntropyLoss() if args.loss_function == "CrossEntropyLoss" else None
 optimizer = optim.Adam(model.parameters(), lr = learning_rate) if args.optimizer == "Adam" else None
@@ -88,12 +94,12 @@ random_int = random.randint(0, 1000)
 wandb.init(
     # set the wandb project where this run will be logged
     project="Thesis",
-    name = f"{task}_{model_name}_{dataset}_{random_int}",
+    name = f"{cnn_model}_{rnn_model}_{num_clips}_{clip_size}_{random_int}",
     # track hyperparameters and run metadata
     config={
         "dataset_name": dataset,
         "task": task,
-        "model": model_name,
+        "architecture": architecture,
         "num_classes": num_classes,
         "num_clips": num_clips,
         "clip_size": clip_size,
@@ -107,7 +113,10 @@ wandb.init(
         "hidden_size": hidden_size,
         "bidirectional": bidirectional,
         "criterion": args.loss_function,
-        "optimizer": args.optimizer
+        "optimizer": args.optimizer,
+        "cnn_model": cnn_model,
+        "rnn_model": rnn_model,
+        "num_layers_rnn": num_layers_rnn,
     }
 )
 

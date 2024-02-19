@@ -37,6 +37,9 @@ def load_checkpoint(model, optimizer, path):
 def train(model, optimizer, criterion, train_loader, DEVICE):
     model.train()  # Set the model to training mode
     running_loss = 0.0
+    print("Length of train loader: ", len(train_loader))
+    print("Total number of frames: ", len(train_loader.dataset))
+    
     for inputs, labels in tqdm(train_loader):
         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
         optimizer.zero_grad()  # Zero the gradients

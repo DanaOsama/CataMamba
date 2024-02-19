@@ -13,4 +13,4 @@
 
 cd Cataracts_Multi-task/
 conda activate multitask # name of the conda environment
-python train.py --num_clips -1 --epochs 50 
+python train.py --num_clips -1 --epochs 50 --hidden_size 256
