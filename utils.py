@@ -37,14 +37,14 @@ def load_checkpoint(model, optimizer, path):
 def train(model, optimizer, criterion, train_loader, DEVICE):
     model.train()  # Set the model to training mode
     running_loss = 0.0
-    print("Length of train loader: ", len(train_loader))
-    print("Total number of frames: ", len(train_loader.dataset))
+    num_frames = 0
     
     for inputs, labels in tqdm(train_loader):
         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
         optimizer.zero_grad()  # Zero the gradients
         labels = labels.float()
         predictions = model(inputs)
+        num_frames += predictions.size(1)
 
         loss = criterion(predictions, labels)
 
@@ -53,7 +53,10 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
         optimizer.step()
 
         running_loss += loss.item()
-    return running_loss / len(train_loader)
+
+    print("Number of frames: ", num_frames)
+    # return running_loss / len(train_loader)
+    return running_loss / num_frames
 
 def validate(model, validation_loader, DEVICE):
     model.eval()  # Set the model to evaluation mode

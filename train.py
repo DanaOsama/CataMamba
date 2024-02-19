@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from dataloaders import Cataracts_101_21_v2
 from utils import * 
 import random
-
+import time
 
 # LOGGING
 import wandb
@@ -82,7 +82,7 @@ step_size = args.step_size
 
 # TODO: Add more processing for those two parameters
 architecture = args.architecture
-model = CNN_RNN_Model(num_classes=num_classes, hidden_size=hidden_size, num_clips=num_clips, num_layers=num_layers_rnn, bidirectional=bidirectional) if architecture == "CNN_RNN" else None
+model = CNN_RNN_Model(num_classes=num_classes, hidden_size=hidden_size, num_clips=num_clips, num_layers=num_layers_rnn, cnn=cnn_model, rnn=rnn_model, bidirectional=bidirectional) if architecture == "CNN_RNN" else None
 model.to(DEVICE)
 criterion = nn.CrossEntropyLoss() if args.loss_function == "CrossEntropyLoss" else None
 optimizer = optim.Adam(model.parameters(), lr = learning_rate) if args.optimizer == "Adam" else None
@@ -191,6 +191,9 @@ best_val_acc = 0 # to keep track of best validation accuracy
 best_val_epoch = -1
 best_metrics = {}
 
+# Capture the start time
+start_time = time.time()
+
 for epoch in range(epochs):
     # run training loop
     print("[INFO] starting training epoch {}".format(str(epoch+1)))
@@ -213,6 +216,17 @@ for epoch in range(epochs):
         best_metrics = metrics
         save_checkpoint(model, optimizer, epoch, checkpoint_path + f"best_model_{random_int}.pth", best = True)
         best_val_epoch = epoch
+
+# Capture the end time
+end_time = time.time()
+# Calculate the total time taken
+total_time = end_time - start_time
+
+# Log the total time taken
+wandb.log({"total_time": total_time})
+
+# Print total time taken
+print(f"[INFO] Total time taken: {total_time:.2f} seconds")
 
 # print(f"[INFO] Best validation accuracy: {best_val_acc:.4f} at epoch {best_val_epoch+1}")
 print("[INFO] Training complete")
