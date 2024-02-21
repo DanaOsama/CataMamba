@@ -2,11 +2,11 @@ from models.cnn_rnn import CNN_RNN_Model
 import os
 import torch
 from torchvision.transforms import v2
-import torch.nn as nn 
+import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataloaders import Cataracts_101_21_v2
-from utils import * 
+from utils import *
 import random
 import time
 
@@ -23,29 +23,121 @@ parser = argparse.ArgumentParser(description="MultiTask Cataracts Training Scrip
 
 # Define command-line arguments
 # TODO: Load them from a config.json file later on
-parser.add_argument("--root_dir", type=str, help="Path containing the downloaded dataset folder Cataracts_Multitask", default="/l/users/dana.mohamed")
-parser.add_argument("--json_path", type=str, help="Path to the json file containing the dataset labels", default="/home/dana.mohamed/MultiTask_Video_Data_Preprocessing/2_NEW_dataset_level_labels.json")
-parser.add_argument("--checkpoint_path", type=str, help="Path to save and load the model checkpoints", default="/l/users/dana.mohamed/checkpoints/")
-                    
-parser.add_argument("--num_classes", type=int, help="Number of classes, default=10", default=10)
-parser.add_argument("--num_clips", type=int, help="Number of clips to sample from each video", default=8)
-parser.add_argument("--clip_size", type=int, help="Number of frames in each clip", default=20)
-parser.add_argument("--step_size", type=int, help="Number of frames to skip when sampling clips", default=1)
+parser.add_argument(
+    "--root_dir",
+    type=str,
+    help="Path containing the downloaded dataset folder Cataracts_Multitask",
+    default="/l/users/dana.mohamed",
+)
+parser.add_argument(
+    "--json_path",
+    type=str,
+    help="Path to the json file containing the dataset labels",
+    default="/home/dana.mohamed/MultiTask_Video_Data_Preprocessing/2_NEW_dataset_level_labels.json",
+)
+parser.add_argument(
+    "--checkpoint_path",
+    type=str,
+    help="Path to save and load the model checkpoints",
+    default="/l/users/dana.mohamed/checkpoints/",
+)
 
-parser.add_argument("--learning_rate", type=float, help="Learning rate for the optimizer", default=0.001)
-parser.add_argument("--epochs", type=int, help="Number of epochs for training the model", default=50)
-parser.add_argument("--batch_size", type=int, help="Batch size for training the model", default=2)
-parser.add_argument("--hidden_size", type=int, help="Hidden size for the RNN", default=512)
-parser.add_argument("--loss_function", type=str, help="Loss function to use for training the model", default="CrossEntropyLoss")
-parser.add_argument("--optimizer", type=str, help="Optimizer to use for training the model", default="Adam")
+parser.add_argument(
+    "--num_classes", type=int, help="Number of classes, default=10", default=10
+)
+parser.add_argument(
+    "--num_clips", type=int, help="Number of clips to sample from each video", default=8
+)
+parser.add_argument(
+    "--clip_size", type=int, help="Number of frames in each clip", default=20
+)
+parser.add_argument(
+    "--step_size",
+    type=int,
+    help="Number of frames to skip when sampling clips",
+    default=1,
+)
 
-parser.add_argument("--task", type=str, help="Task to train the model on", default="Phase_detection")
-parser.add_argument("--dataset", choices=['1_Cataracts-21', '2_Cataracts-101'], help="Dataset to train the model on", default="2_Cataracts-101")
-parser.add_argument("--architecture", choices=['CNN_RN'], help="Model to use for training", default="CNN_RNN")
-parser.add_argument("--cnn_model", choices=['resnet18', 'resnet50', 'resnet101'], help="CNN model to use for training", default="resnet50")
-parser.add_argument("--rnn_model", choices=['lstm', 'gru'], help="RNN model to use for training", default="lstm")
-parser.add_argument("--num_layers_rnn", type=int, help="Number of layers for the RNN", default=1)
-parser.add_argument("--bidirectional", type=bool, help="Whether to use a bidirectional RNN", default=False)
+parser.add_argument(
+    "--learning_rate", type=float, help="Learning rate for the optimizer", default=0.001
+)
+parser.add_argument(
+    "--epochs", type=int, help="Number of epochs for training the model", default=50
+)
+parser.add_argument(
+    "--batch_size", type=int, help="Batch size for training the model", default=2
+)
+parser.add_argument(
+    "--hidden_size", type=int, help="Hidden size for the RNN", default=512
+)
+parser.add_argument(
+    "--loss_function",
+    type=str,
+    help="Loss function to use for training the model",
+    default="CrossEntropyLoss",
+)
+parser.add_argument(
+    "--optimizer",
+    type=str,
+    help="Optimizer to use for training the model",
+    default="Adam",
+)
+
+parser.add_argument(
+    "--task", type=str, help="Task to train the model on", default="Phase_detection"
+)
+parser.add_argument(
+    "--dataset",
+    choices=["1_Cataracts-21", "2_Cataracts-101"],
+    help="Dataset to train the model on",
+    default="2_Cataracts-101",
+)
+parser.add_argument(
+    "--architecture",
+    choices=["CNN_RN"],
+    help="Model to use for training",
+    default="CNN_RNN",
+)
+parser.add_argument(
+    "--cnn_model",
+    choices=["resnet18", "resnet50", "resnet101"],
+    help="CNN model to use for training",
+    default="resnet50",
+)
+parser.add_argument(
+    "--rnn_model",
+    choices=["lstm", "gru"],
+    help="RNN model to use for training",
+    default="lstm",
+)
+parser.add_argument(
+    "--num_layers_rnn", type=int, help="Number of layers for the RNN", default=1
+)
+parser.add_argument(
+    "--bidirectional",
+    type=bool,
+    help="Whether to use a bidirectional RNN",
+    default=False,
+)
+
+parser.add_argument(
+    "--resume_training",
+    type=bool,
+    help="Whether to resume training from a checkpoint",
+    default=False,
+)
+parser.add_argument(
+    "--random_int",
+    type=int,
+    help="Used when resuming training for a specific model",
+    default=0,
+)
+parser.add_argument(
+    "--wandb_run_id",
+    type=str,
+    help="Used when resuming training for a specific model to resume the wandb run",
+    default=None,
+)
 
 # Parse the command-line arguments
 args = parser.parse_args()
@@ -54,7 +146,9 @@ args = parser.parse_args()
 torch.manual_seed(0)
 
 # Set the device to GPU if available
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu" # check if NVIDIA device is visible to torch
+DEVICE = (
+    "cuda" if torch.cuda.is_available() else "cpu"
+)  # check if NVIDIA device is visible to torch
 
 # Parameters
 learning_rate = args.learning_rate
@@ -82,55 +176,81 @@ step_size = args.step_size
 
 # TODO: Add more processing for those two parameters
 architecture = args.architecture
-model = CNN_RNN_Model(num_classes=num_classes, hidden_size=hidden_size, num_clips=num_clips, num_layers=num_layers_rnn, cnn=cnn_model, rnn=rnn_model, bidirectional=bidirectional) if architecture == "CNN_RNN" else None
+model = (
+    CNN_RNN_Model(
+        num_classes=num_classes,
+        hidden_size=hidden_size,
+        num_clips=num_clips,
+        num_layers=num_layers_rnn,
+        cnn=cnn_model,
+        rnn=rnn_model,
+        bidirectional=bidirectional,
+    )
+    if architecture == "CNN_RNN"
+    else None
+)
 model.to(DEVICE)
 criterion = nn.CrossEntropyLoss() if args.loss_function == "CrossEntropyLoss" else None
-optimizer = optim.Adam(model.parameters(), lr = learning_rate) if args.optimizer == "Adam" else None
+optimizer = (
+    optim.Adam(model.parameters(), lr=learning_rate)
+    if args.optimizer == "Adam"
+    else None
+)
 # ####################################################################################################################################
 
 # Add Wandb logging
-# start a new wandb run to track this script
-random_int = random.randint(0, 1000)
-wandb.init(
-    # set the wandb project where this run will be logged
-    project="Thesis",
-    name = f"{cnn_model}_{rnn_model}_{num_clips}_{clip_size}_{random_int}",
-    # track hyperparameters and run metadata
-    config={
-        "dataset_name": dataset,
-        "task": task,
-        "architecture": architecture,
-        "num_classes": num_classes,
-        "num_clips": num_clips,
-        "clip_size": clip_size,
-        "step_size": step_size,
-        "root_dir": root_dir,
-        "json_path": json_path,
-        "checkpoint_path": checkpoint_path,
-        "learning_rate": learning_rate,
-        "epochs": epochs,
-        "batch_size": batch_size,
-        "hidden_size": hidden_size,
-        "bidirectional": bidirectional,
-        "criterion": args.loss_function,
-        "optimizer": args.optimizer,
-        "cnn_model": cnn_model,
-        "rnn_model": rnn_model,
-        "num_layers_rnn": num_layers_rnn,
-    }
-)
+if args.resume_training:
+    random_int = args.random_int
+    wandb_run_id = args.wandb_run_id
+    if wandb_run_id is not None:
+        wandb.init(id=wandb_run_id, resume="allow")
+else:
+    random_int = random.randint(0, 1000000)
+
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="Thesis",
+        name=f"{cnn_model}_{rnn_model}_{num_clips}_{clip_size}_{random_int}",
+        # track hyperparameters and run metadata
+        config={
+            "dataset_name": dataset,
+            "task": task,
+            "architecture": architecture,
+            "num_classes": num_classes,
+            "num_clips": num_clips,
+            "clip_size": clip_size,
+            "step_size": step_size,
+            "root_dir": root_dir,
+            "json_path": json_path,
+            "checkpoint_path": checkpoint_path,
+            "learning_rate": learning_rate,
+            "epochs": epochs,
+            "batch_size": batch_size,
+            "hidden_size": hidden_size,
+            "bidirectional": bidirectional,
+            "criterion": args.loss_function,
+            "optimizer": args.optimizer,
+            "cnn_model": cnn_model,
+            "rnn_model": rnn_model,
+            "num_layers_rnn": num_layers_rnn,
+        },
+    )
 
 # number of parameters in the model
-print("[INFO] number of parameters in the model: {}".format(sum(p.numel() for p in model.parameters())))
+print(
+    "[INFO] number of parameters in the model: {}".format(
+        sum(p.numel() for p in model.parameters())
+    )
+)
 
 # Transforms
 transform = v2.Compose(
-        [
-            v2.Resize((224, 224)),  # Example resize, adjust as needed
-            # v2.ToTensor(),  # This converts PIL images to PyTorch tensors
-            # v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Example normalization
-        ]
-    )
+    [
+        v2.Resize((224, 224)),  # Example resize, adjust as needed
+        # v2.ToTensor(),  # This converts PIL images to PyTorch tensors
+        # v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Example normalization
+    ]
+)
 
 
 # Create a the directory to save the checkpoints
@@ -187,34 +307,58 @@ else:
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
-best_val_acc = 0 # to keep track of best validation accuracy
+best_val_acc = 0  # to keep track of best validation accuracy
 best_val_epoch = -1
 best_metrics = {}
 
 # Capture the start time
 start_time = time.time()
 
-for epoch in range(epochs):
+if args.resume_training:
+    # Load the model
+    ckpt = load_checkpoint(
+        model, optimizer, checkpoint_path + f"last_epoch_{random_int}.pth"
+    )
+
+    start_epoch = ckpt["epoch"]
+    model.load_state_dict(ckpt["model_state_dict"])
+    optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+
+    print(f"[INFO] Resuming training from epoch {start_epoch+1}")
+else:
+    start_epoch = 0
+
+for epoch in range(start_epoch, epochs):
     # run training loop
-    print("[INFO] starting training epoch {}".format(str(epoch+1)))
+    print("[INFO] starting training epoch {}".format(str(epoch + 1)))
     loss = train(model, optimizer, criterion, train_loader, DEVICE)
     wandb.log({"train_loss": loss})
 
     # acc = validate(model, val_loader, DEVICE)
     # TODO: Check which metric I want to use to evaluate the best model
     metrics = validate(model, val_loader, DEVICE)
-    acc = metrics['accuracy']
+    acc = metrics["accuracy"]
     wandb.log({"val_accuracy": acc})
-    wandb.log({"val_precision": metrics['precision']})
-    wandb.log({"val_recall": metrics['recall']})
-    wandb.log({"val_f1_score": metrics['f1_score']})
-    
-    print(f"[INFO] Epoch {epoch+1}/{epochs}, train loss: {loss:.4f}, val accuracy: {acc:.4f}")
-    save_checkpoint(model, optimizer, epoch, checkpoint_path + f"last_epoch_{random_int}.pth") # save checkpoint after each epoch
-    if(acc > best_val_acc):
+    wandb.log({"val_precision": metrics["precision"]})
+    wandb.log({"val_recall": metrics["recall"]})
+    wandb.log({"val_f1_score": metrics["f1_score"]})
+
+    print(
+        f"[INFO] Epoch {epoch+1}/{epochs}, train loss: {loss:.4f}, val accuracy: {acc:.4f}"
+    )
+    save_checkpoint(
+        model, optimizer, epoch, checkpoint_path + f"last_epoch_{random_int}.pth"
+    )  # save checkpoint after each epoch
+    if acc > best_val_acc:
         best_val_acc = acc
         best_metrics = metrics
-        save_checkpoint(model, optimizer, epoch, checkpoint_path + f"best_model_{random_int}.pth", best = True)
+        save_checkpoint(
+            model,
+            optimizer,
+            epoch,
+            checkpoint_path + f"best_model_{random_int}.pth",
+            best=True,
+        )
         best_val_epoch = epoch
 
 # Capture the end time
@@ -236,43 +380,45 @@ print("VALIDATION SET RESULTS:")
 print("#################")
 results = PrettyTable()
 results.field_names = ["Metric", "Value"]
-results.add_row(["Accuracy", best_metrics['accuracy']])
-results.add_row(["Precision", best_metrics['precision']])
-results.add_row(["Recall", best_metrics['recall']])
-results.add_row(["F1-Score", best_metrics['f1_score']])
+results.add_row(["Accuracy", best_metrics["accuracy"]])
+results.add_row(["Precision", best_metrics["precision"]])
+results.add_row(["Recall", best_metrics["recall"]])
+results.add_row(["F1-Score", best_metrics["f1_score"]])
 print(results)
 
 table = wandb.Table(columns=["Metrics_Validation_Set", "Value"])
-table.add_data("Accuracy", best_metrics['accuracy'])
-table.add_data("Precision", best_metrics['precision'])
-table.add_data("Recall", best_metrics['recall'])
-table.add_data("F1-Score", best_metrics['f1_score'])
-wandb.log({"results_table":table}, commit=False)
-
+table.add_data("Accuracy", best_metrics["accuracy"])
+table.add_data("Precision", best_metrics["precision"])
+table.add_data("Recall", best_metrics["recall"])
+table.add_data("F1-Score", best_metrics["f1_score"])
+wandb.log({"results_table": table}, commit=False)
 
 
 # Test the model
 # load best_model
-model = load_checkpoint(model, optimizer, checkpoint_path + f"best_model_{random_int}.pth")
+ckpt = load_checkpoint(
+    model, optimizer, checkpoint_path + f"best_model_{random_int}.pth"
+)
+model = model.load_state_dict(ckpt["model_state_dict"])
 
 test_metrics = validate(model, test_loader, DEVICE)
 
 table = wandb.Table(columns=["Metrics_Test_Set", "Value"])
-table.add_data("Accuracy", test_metrics['accuracy'])
-table.add_data("Precision", test_metrics['precision'])
-table.add_data("Recall", test_metrics['recall'])
-table.add_data("F1-Score", test_metrics['f1_score'])
-wandb.log({"test_results_table":table}, commit=False)
+table.add_data("Accuracy", test_metrics["accuracy"])
+table.add_data("Precision", test_metrics["precision"])
+table.add_data("Recall", test_metrics["recall"])
+table.add_data("F1-Score", test_metrics["f1_score"])
+wandb.log({"test_results_table": table}, commit=False)
 
 # Create a table with the results
 print("TEST SET RESULTS:")
 print("#################")
 results = PrettyTable()
 results.field_names = ["Metric", "Value"]
-results.add_row(["Accuracy", test_metrics['accuracy']])
-results.add_row(["Precision", test_metrics['precision']])
-results.add_row(["Recall", test_metrics['recall']])
-results.add_row(["F1-Score", test_metrics['f1_score']])
+results.add_row(["Accuracy", test_metrics["accuracy"]])
+results.add_row(["Precision", test_metrics["precision"]])
+results.add_row(["Recall", test_metrics["recall"]])
+results.add_row(["F1-Score", test_metrics["f1_score"]])
 print(results)
 
 print("Run ID: ", wandb.run.id)

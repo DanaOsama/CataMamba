@@ -27,11 +27,12 @@ def save_checkpoint(model, optimizer, epoch, path, best=False):
 
 def load_checkpoint(model, optimizer, path):
     ckpt = torch.load(path)
-    model.load_state_dict(ckpt["model_state_dict"])
-    optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+    # model.load_state_dict(ckpt["model_state_dict"])
+    # optimizer.load_state_dict(ckpt["optimizer_state_dict"])
 
+    # epoch = ckpt["epoch"]
     print("[INFO] checkpoint loaded")
-    return model
+    return ckpt
 
 
 def train(model, optimizer, criterion, train_loader, DEVICE):

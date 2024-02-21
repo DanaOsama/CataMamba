@@ -10,7 +10,10 @@
 #SBATCH --time=12:00:00             # Specify the time needed for your experiment
 #SBATCH --qos=gpu-8                 # To enable the use of up to 8 GPUs
 
-
 cd Cataracts_Multi-task/
+module load conda
+# module load cuda10.2/toolkit/10.2.89
+eval "$(conda shell.bash hook)"
 conda activate multitask # name of the conda environment
-python train.py --num_clips -1
+
+python train.py --num_clips -1 --hidden_size 256
