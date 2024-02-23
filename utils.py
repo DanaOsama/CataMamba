@@ -56,7 +56,6 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
 
         running_loss += loss.item()
 
-    print("Number of frames: ", num_frames)
     # return running_loss / len(train_loader)
     return running_loss / num_frames
 
