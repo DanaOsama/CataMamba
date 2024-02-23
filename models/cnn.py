@@ -4,6 +4,7 @@ import torchvision.models as models
 
 feature_sizes = {"resnet18": 512, "resnet50": 2048, "resnet101": 2048}
 
+
 class CNN(nn.Module):
     def __init__(self, cnn="resnet50", num_classes=10):
         super(CNN, self).__init__()

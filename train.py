@@ -188,7 +188,7 @@ architectures = {
         bidirectional=bidirectional,
     ),
     "CNN": CNN(cnn=cnn_model, num_classes=num_classes),
-    "ViT": ViT(num_classes=num_classes)
+    "ViT": ViT(num_classes=num_classes),
 }
 model = architectures[architecture]
 model.to(DEVICE)
@@ -209,34 +209,17 @@ if args.resume_training and args.wandb_run_id is not None:
 
 else:
     random_int = random.randint(0, 1000000)
-
+    exp_name = (
+        f"{architecture}___{cnn_model}_{rnn_model}_{num_clips}_{clip_size}_{random_int}"
+        if architecture == "CNN_RNN"
+        else f"{architecture}___{cnn_model}_{num_clips}_{clip_size}_{random_int}"
+    )
     wandb.init(
         # set the wandb project where this run will be logged
         project="Thesis",
-        name=f"{cnn_model}_{rnn_model}_{num_clips}_{clip_size}_{random_int}",
+        name=exp_name,
         # track hyperparameters and run metadata
-        config={
-            "dataset_name": dataset,
-            "task": task,
-            "architecture": architecture,
-            "num_classes": num_classes,
-            "num_clips": num_clips,
-            "clip_size": clip_size,
-            "step_size": step_size,
-            "root_dir": root_dir,
-            "json_path": json_path,
-            "checkpoint_path": checkpoint_path,
-            "learning_rate": learning_rate,
-            "epochs": epochs,
-            "batch_size": batch_size,
-            "hidden_size": hidden_size,
-            "bidirectional": bidirectional,
-            "criterion": args.loss_function,
-            "optimizer": args.optimizer,
-            "cnn_model": cnn_model,
-            "rnn_model": rnn_model,
-            "num_layers_rnn": num_layers_rnn,
-        },
+        config=args,
     )
 
 # number of parameters in the model
@@ -427,4 +410,11 @@ print(results)
 print("Run ID: ", wandb.run.id)
 print("Run URL: ", wandb.run.get_url())
 print(f"Random int: {random_int}")
+
+wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
+wandb.run.summary["test_precision"] = test_metrics["precision"]
+wandb.run.summary["test_recall"] = test_metrics["recall"]
+wandb.run.summary["test_f1_score"] = test_metrics["f1_score"]
+
+
 wandb.finish()

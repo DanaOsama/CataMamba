@@ -12,6 +12,7 @@ from sklearn.metrics import (
     accuracy_score,
 )
 
+
 def save_checkpoint(model, optimizer, epoch, path, best=False):
     checkpoint = {
         "epoch": epoch,
@@ -39,7 +40,7 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
     model.train()  # Set the model to training mode
     running_loss = 0.0
     num_frames = 0
-    
+
     for inputs, labels in tqdm(train_loader):
         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
         optimizer.zero_grad()  # Zero the gradients
@@ -58,6 +59,7 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
     print("Number of frames: ", num_frames)
     # return running_loss / len(train_loader)
     return running_loss / num_frames
+
 
 def validate(model, validation_loader, DEVICE):
     model.eval()  # Set the model to evaluation mode
@@ -82,8 +84,10 @@ def validate(model, validation_loader, DEVICE):
     all_labels = np.concatenate(all_labels)
 
     # Calculate metrics
-    precision = precision_score(all_labels, all_predicted, zero_division=0, average="macro")
-    recall = recall_score(all_labels, all_predicted,zero_division=0, average="macro")
+    precision = precision_score(
+        all_labels, all_predicted, zero_division=0, average="macro"
+    )
+    recall = recall_score(all_labels, all_predicted, zero_division=0, average="macro")
     f1 = f1_score(all_labels, all_predicted, zero_division=0, average="macro")
     accuracy = accuracy_score(all_labels, all_predicted)
 
