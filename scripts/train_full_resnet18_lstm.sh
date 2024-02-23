@@ -16,4 +16,5 @@ module load conda
 eval "$(conda shell.bash hook)"
 conda activate multitask # name of the conda environment
 wandb online 
-python train.py --num_clips -1 --rnn_model gru --cnn_model resnet18 --hidden_size 256 --resume_training True --random_int 666
+# python train.py --num_clips -1 --rnn_model lstm --cnn_model resnet18 --hidden_size 256
+python train.py --num_clips -1 --rnn_model lstm --cnn_model resnet18 --hidden_size 256 --random_int 804145 --wandb_run_id eq89uao2 --resume_training True

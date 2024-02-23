@@ -199,11 +199,11 @@ optimizer = (
 # ####################################################################################################################################
 
 # Add Wandb logging
-if args.resume_training:
+if args.resume_training and args.wandb_run_id is not None:
     random_int = args.random_int
     wandb_run_id = args.wandb_run_id
-    if wandb_run_id is not None:
-        wandb.init(id=wandb_run_id, resume="allow")
+    wandb.init(project="Thesis", id=wandb_run_id, resume="allow")
+
 else:
     random_int = random.randint(0, 1000000)
 
@@ -399,7 +399,7 @@ wandb.log({"results_table": table}, commit=False)
 ckpt = load_checkpoint(
     model, optimizer, checkpoint_path + f"best_model_{random_int}.pth"
 )
-model = model.load_state_dict(ckpt["model_state_dict"])
+model.load_state_dict(ckpt["model_state_dict"])
 
 test_metrics = validate(model, test_loader, DEVICE)
 

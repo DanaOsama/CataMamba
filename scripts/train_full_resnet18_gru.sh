@@ -10,24 +10,6 @@
 #SBATCH --time=12:00:00             # Specify the time needed for your experiment
 #SBATCH --qos=gpu-8                 # To enable the use of up to 8 GPUs
 
-# parser.add_argument(
-#     "--resume_training",
-#     type=bool,
-#     help="Whether to resume training from a checkpoint",
-#     default=False,
-# )
-# parser.add_argument(
-#     "--random_int",
-#     type=int,
-#     help="Used when resuming training for a specific model",
-#     default=0,
-# )
-# parser.add_argument(
-#     "--wandb_run_id",
-#     type=str,
-#     help="Used when resuming training for a specific model to resume the wandb run",
-#     default=None,
-# )
 
 cd Cataracts_Multi-task/
 module load conda
@@ -35,5 +17,5 @@ module load conda
 eval "$(conda shell.bash hook)"
 conda activate multitask # name of the conda environment
 wandb online 
-python train.py --num_clips -1 --rnn_model gru --cnn_model resnet18 --hidden_size 256  --resume_training True --random_int 666
-```
+# python train.py --num_clips -1 --rnn_model gru --cnn_model resnet18 --hidden_size 256 
+python train.py --num_clips -1 --rnn_model gru --cnn_model resnet18 --hidden_size 256 --random_int 692564 --wandb_run_id eq89uao2 --resume_training True
