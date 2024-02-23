@@ -6,10 +6,9 @@ CNN_models = {"resnet18": 512, "resnet50": 2048, "resnet101": 2048}
 
 
 class CNN_RNN_Model(nn.Module):
-    def __init__(self, num_classes, hidden_size, num_clips, num_layers, cnn="resnet50", rnn="lstm", bidirectional=False):
+    def __init__(self, num_classes, hidden_size, num_layers, cnn="resnet50", rnn="lstm", bidirectional=False):
         super(CNN_RNN_Model, self).__init__()
 
-        self.num_clips = num_clips
         # Load a pre-trained CNN model
         if cnn == "resnet18":
             self.cnn = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
@@ -37,10 +36,9 @@ class CNN_RNN_Model(nn.Module):
         # Adjust the final fully connected layer to output predictions for each time step
         # If the RNN is bidirectional, it concatenates the hidden states from both directions,
         # so we multiply the hidden size by 2 for the input size to the fully connected layer.
-        # TODO: Check if bidirectional is looking at the future or the past
         rnn_output_size = hidden_size * 2 if bidirectional else hidden_size
         self.fc = nn.Linear(rnn_output_size, num_classes)
-        self.softmax = nn.Softmax(dim=2)
+
         
     def forward(self, x):
 
@@ -63,5 +61,4 @@ class CNN_RNN_Model(nn.Module):
         # out is of shape (batch_size, sequence_length, num_classes)
         # This gives a prediction for each frame in the sequence
 
-        # out = self.softmax(out)
         return out

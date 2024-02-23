@@ -83,8 +83,8 @@ def validate(model, validation_loader, DEVICE):
 
     # Calculate metrics
     precision = precision_score(all_labels, all_predicted, zero_division=0, average="macro")
-    recall = recall_score(all_labels, all_predicted, average="macro")
-    f1 = f1_score(all_labels, all_predicted, average="macro")
+    recall = recall_score(all_labels, all_predicted,zero_division=0, average="macro")
+    f1 = f1_score(all_labels, all_predicted, zero_division=0, average="macro")
     accuracy = accuracy_score(all_labels, all_predicted)
 
     metrics = {

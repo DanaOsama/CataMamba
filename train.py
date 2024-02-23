@@ -1,4 +1,6 @@
 from models.cnn_rnn import CNN_RNN_Model
+from models.cnn import CNN
+from models.vit import ViT
 import os
 import torch
 from torchvision.transforms import v2
@@ -94,7 +96,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--architecture",
-    choices=["CNN_RN"],
+    choices=["CNN_RNN", "CNN", "ViT"],
     help="Model to use for training",
     default="CNN_RNN",
 )
@@ -176,20 +178,21 @@ step_size = args.step_size
 
 # TODO: Add more processing for those two parameters
 architecture = args.architecture
-model = (
-    CNN_RNN_Model(
+architectures = {
+    "CNN_RNN": CNN_RNN_Model(
         num_classes=num_classes,
         hidden_size=hidden_size,
-        num_clips=num_clips,
         num_layers=num_layers_rnn,
         cnn=cnn_model,
         rnn=rnn_model,
         bidirectional=bidirectional,
-    )
-    if architecture == "CNN_RNN"
-    else None
-)
+    ),
+    "CNN": CNN(cnn=cnn_model, num_classes=num_classes),
+    "ViT": ViT(num_classes=num_classes)
+}
+model = architectures[architecture]
 model.to(DEVICE)
+
 criterion = nn.CrossEntropyLoss() if args.loss_function == "CrossEntropyLoss" else None
 optimizer = (
     optim.Adam(model.parameters(), lr=learning_rate)
