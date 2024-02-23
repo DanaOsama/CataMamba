@@ -24,10 +24,6 @@ class CNN(nn.Module):
 
         x = x.view(batch_size * sequence_length, C, H, W)
         x = self.cnn(x)
-        print("x.size after cnn", x.size())
         x = self.fc(x)
-        print("x.size after fc", x.size())
         x = x.view(batch_size, sequence_length, -1)
-        print("x.size after view", x.size())
-
         return x

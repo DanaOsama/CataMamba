@@ -36,11 +36,7 @@ class ViT(nn.Module):
 
     def forward(self, x):
         batch_size, sequence_length, C, H, W = x.size()
-
         x = x.view(batch_size * sequence_length, C, H, W)
         x = self.vit(x)
-        print("x.size after vit", x.size())
         x = x.view(batch_size, sequence_length, -1)
-        print("x.size after view", x.size())
-
         return x
