@@ -35,7 +35,7 @@ parser.add_argument(
     "--json_path",
     type=str,
     help="Path to the json file containing the dataset labels",
-    default="/home/dana.mohamed/MultiTask_Video_Data_Preprocessing/2_NEW_dataset_level_labels.json",
+    default="/l/users/dana.mohamed/Cataracts_Multitask/labels_dataset_level.json"
 )
 parser.add_argument(
     "--checkpoint_path",
