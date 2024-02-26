@@ -49,7 +49,8 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
         predictions = predictions.view(batch_size * num_frames, num_classes)
         labels = torch.argmax(labels, dim=-1)
         labels = labels.view(-1)
-        total_frames += num_frames
+        total_frames += num_frames*batch_size
+        print("Total_frames:", total_frames)
 
         # Expected input shape: (batch_size * num_frames, num_classes)
         # Expected label shape: (batch_size * num_frames) where each label is a class index
