@@ -92,7 +92,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--dataset",
-    choices=["1_Cataracts-21", "2_Cataracts-101"],
+    choices=["1_Cataracts-21", "2_Cataracts-101", "9_CATARACTS"],
     help="Dataset to train the model on",
     default="2_Cataracts-101",
 )
@@ -253,7 +253,7 @@ train_dataset = Cataracts_101_21_v2(
     root_dir,
     json_path,
     # dataset_name="1_Cataracts-21",
-    dataset_name="2_Cataracts-101",
+    dataset_name=dataset,
     split="Train",
     num_classes=num_classes,
     num_clips=num_clips,
@@ -266,7 +266,7 @@ val_dataset = Cataracts_101_21_v2(
     root_dir,
     json_path,
     # dataset_name="1_Cataracts-21",
-    dataset_name="2_Cataracts-101",
+    dataset_name=dataset,
     split="Validation",
     num_classes=num_classes,
     num_clips=num_clips,
@@ -279,7 +279,7 @@ test_dataset = Cataracts_101_21_v2(
     root_dir,
     json_path,
     # dataset_name="1_Cataracts-21",
-    dataset_name="2_Cataracts-101",
+    dataset_name=dataset,
     split="Test",
     num_classes=num_classes,
     num_clips=num_clips,
@@ -366,6 +366,27 @@ print(f"[INFO] Total time taken: {total_time:.2f} seconds")
 # print(f"[INFO] Best validation accuracy: {best_val_acc:.4f} at epoch {best_val_epoch+1}")
 print("[INFO] Training complete")
 
+
+# Unwanted scenario
+if len(best_metrics) == 0:
+    print("No best metrics found, using the last metrics")
+    best_metrics = metrics
+
+    # Get last checkpoint to test the model
+    ckpt = load_checkpoint(
+    model, optimizer,  checkpoint_path + f"last_epoch_{run_id}.pth"
+)
+else:
+    # Get the best validation checkpoint to test the model
+    ckpt = load_checkpoint(
+    model, optimizer, checkpoint_path + f"best_model_{run_id}.pth")
+
+
+
+model.load_state_dict(ckpt["model_state_dict"])
+per_class_metrics = True
+test_metrics = validate(model, test_loader, DEVICE, per_class_metrics=per_class_metrics)
+
 # Create a table with the results
 print("VALIDATION SET RESULTS:")
 print("#################")
@@ -385,14 +406,7 @@ table.add_data("F1-Score", best_metrics["f1_score"])
 wandb.log({"validation_results_table": table}, commit=False)
 
 
-# Test the model
-# load best_model
-ckpt = load_checkpoint(
-    model, optimizer, checkpoint_path + f"best_model_{run_id}.pth"
-)
-model.load_state_dict(ckpt["model_state_dict"])
 
-test_metrics = validate(model, test_loader, DEVICE)
 
 # Log the test results on Wandb
 table = wandb.Table(columns=["Metrics_Test_Set", "Value"])
@@ -402,13 +416,15 @@ table.add_data("Recall", test_metrics["recall"])
 table.add_data("F1-Score", test_metrics["f1_score"])
 wandb.log({"test_results_table": table}, commit=False)
 
-columns_per_class = ["Metric"] + [f"Phase_{i}" for i in range(num_classes)]
-table = wandb.Table(columns=columns_per_class)
-table.add_data(*(["Jaccard"] + [str(j) for j in test_metrics["jaccard_per_class"]]))
-table.add_data(*(["Precision"] + [str(p) for p in test_metrics["precision_per_class"]]))
-table.add_data(*(["Recall"] + [str(r) for r in test_metrics["recall_per_class"]]))
-table.add_data(*(["F1-Score"] + [str(f) for f in test_metrics["f1_per_class"]]))
-wandb.log({"test_results_table_per_class": table}, commit=False)
+
+if per_class_metrics:
+    columns_per_class = ["Metric"] + [f"Phase_{i}" for i in range(num_classes)]
+    table = wandb.Table(columns=columns_per_class)
+    table.add_data(*(["Jaccard"] + [str(j) for j in test_metrics["jaccard_per_class"]]))
+    table.add_data(*(["Precision"] + [str(p) for p in test_metrics["precision_per_class"]]))
+    table.add_data(*(["Recall"] + [str(r) for r in test_metrics["recall_per_class"]]))
+    table.add_data(*(["F1-Score"] + [str(f) for f in test_metrics["f1_per_class"]]))
+    wandb.log({"test_results_table_per_class": table}, commit=False)
 
 # Print the results
 # Create a table with the results

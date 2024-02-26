@@ -17,7 +17,7 @@ from sklearn.metrics import (
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, Normalize
 import matplotlib as mpl
 
 def save_checkpoint(model, optimizer, epoch, path, best=False):
@@ -72,7 +72,7 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
     return running_loss / total_frames
 
 
-def validate(model, validation_loader, DEVICE):
+def validate(model, validation_loader, DEVICE, per_class_metrics=True):
     model.eval()  # Set the model to evaluation mode
     all_predicted = []
     all_labels = []
@@ -103,10 +103,10 @@ def validate(model, validation_loader, DEVICE):
     cf_matrix = confusion_matrix(all_labels, all_predicted)
     
     # Per class metrics, where the averaging is set to None.
-    precision_per_class = precision_score(all_labels, all_predicted, zero_division=0, average=None)
-    recall_per_class = recall_score(all_labels, all_predicted, zero_division=0, average=None)
-    f1_per_class = f1_score(all_labels, all_predicted, zero_division=0, average=None)
-    jaccard_per_class = jaccard_score(all_labels, all_predicted, average=None)
+    precision_per_class = precision_score(all_labels, all_predicted, zero_division=1.0, average=None)
+    recall_per_class = recall_score(all_labels, all_predicted, zero_division=1.0 , average=None)
+    f1_per_class = f1_score(all_labels, all_predicted, zero_division=1.0, average=None)
+    jaccard_per_class = jaccard_score(all_labels, all_predicted, average=None, zero_division=1.0)
 
     metrics = {
         "accuracy": accuracy,
@@ -114,12 +114,13 @@ def validate(model, validation_loader, DEVICE):
         "recall": recall,
         "f1_score": f1,
         "jaccard": jaccard,
-        "precision_per_class": precision_per_class,
-        "recall_per_class": recall_per_class,
-        "f1_per_class": f1_per_class,
-        "jaccard_per_class": jaccard_per_class,
         "confusion_matrix": cf_matrix,
     }
+    if per_class_metrics:
+        metrics["precision_per_class"] = precision_per_class
+        metrics["recall_per_class"] = recall_per_class
+        metrics["f1_per_class"] = f1_per_class
+        metrics["jaccard_per_class"] = jaccard_per_class
 
     return metrics
 
@@ -139,7 +140,7 @@ def save_confusion_matrix(cf_matrix, path):
     plt.yticks(np.arange(len(class_names)) + 0.5, class_names, rotation=45)
     plt.savefig(path, bbox_inches='tight', dpi=300)
 
-def plot_results(predictions, title, position, total_plots, cmap=None):
+def plot_results(predictions, title, position, total_plots, num_classes, cmap=None):
     """
     plot_results: Function to plot the results of the predictions
     :param predictions: Predictions (np.array) (num_frames,)
@@ -147,8 +148,12 @@ def plot_results(predictions, title, position, total_plots, cmap=None):
     :param position: Position of the plot (int)
     :param total_plots: Total number of plots (int)
     """
+
+
     plt.subplot(total_plots, 1, position)
-    plt.imshow(predictions[np.newaxis, :], cmap=cmap, aspect="auto")
+    print("num_classes", num_classes)
+    norm = Normalize(vmin=0, vmax=num_classes-1)
+    plt.imshow(predictions[np.newaxis, :], cmap=cmap, aspect="auto", norm=norm)
     plt.gca().set_yticks([])
     plt.gca().set_xticks(np.arange(0, len(predictions), 10))
     plt.ylabel(title)
@@ -200,19 +205,22 @@ def make_qualitative_results(models_dic, batch, path, num_classes, DEVICE):
         model_predictions = models_dic[model](inputs).cpu().detach().numpy()
         predictions[model] = np.argmax(model_predictions, axis=-1).squeeze() # (batch_size, num_frames) if batch_size is not 1, else (num_frames,)
 
+        print("FOR PLotting")
+        print("predictions", predictions[model])
+    print("ground_truth", ground_truth)
     # Plotting
     plt.figure(figsize=(12, 6))
 
     # First, plot the ground truth
-    plot_results(ground_truth, "Ground Truth", 1, num_of_models, cmap)
+    plot_results(ground_truth, "Ground Truth", 1, num_of_models, num_classes, cmap)
 
     # Plot the predictions
     for i, model_name in enumerate(models_dic.keys()):
-        # def plot_results(predictions, title, position, total_plots, cmap=None):
-        plot_results(predictions[model_name], model_name, i+2, num_of_models + 1, cmap)
+        # def plot_results(predictions, title, position, total_plots, num_classes, cmap=None):
+        plot_results(predictions[model_name], model_name, i+2, num_of_models + 1, num_classes, cmap)
 
     # Create a legend
-    handles = [mpatches.Patch(color=custom_colors[i], label=f'Phase {i+1}') for i in range(len(custom_colors))]
+    handles = [mpatches.Patch(color=custom_colors[i], label=f'Phase {i}') for i in range(num_classes)]
     plt.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left')
 
     # Final adjustments
