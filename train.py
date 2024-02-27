@@ -243,7 +243,11 @@ print(
 # Transforms
 transform = v2.Compose(
     [
-        v2.Resize((224, 224)),  # Example resize, adjust as needed
+        v2.Resize((250, 250)),  # Example resize, adjust as needed
+        v2.RandomCrop(224),
+        v2.RandomHorizontalFlip(),
+        v2.RandomEqualize(),
+
         # v2.ToTensor(),  # This converts PIL images to PyTorch tensors
         # v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Example normalization
     ]
