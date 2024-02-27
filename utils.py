@@ -151,7 +151,6 @@ def plot_results(predictions, title, position, total_plots, num_classes, cmap=No
 
 
     plt.subplot(total_plots, 1, position)
-    print("num_classes", num_classes)
     norm = Normalize(vmin=0, vmax=num_classes-1)
     plt.imshow(predictions[np.newaxis, :], cmap=cmap, aspect="auto", norm=norm)
     plt.gca().set_yticks([])
@@ -205,9 +204,6 @@ def make_qualitative_results(models_dic, batch, path, num_classes, DEVICE):
         model_predictions = models_dic[model](inputs).cpu().detach().numpy()
         predictions[model] = np.argmax(model_predictions, axis=-1).squeeze() # (batch_size, num_frames) if batch_size is not 1, else (num_frames,)
 
-        print("FOR PLotting")
-        print("predictions", predictions[model])
-    print("ground_truth", ground_truth)
     # Plotting
     plt.figure(figsize=(12, 6))
 

@@ -224,7 +224,7 @@ if args.loss_function == "CrossEntropyLoss":
             ],
             dtype=np.float32,
         )
-        criterion = nn.CrossEntropyLoss(weight=class_weights)
+        criterion = nn.CrossEntropyLoss(weight=torch.tensor(class_weights).float().to(DEVICE))
     else:
         criterion = nn.CrossEntropyLoss()
 
