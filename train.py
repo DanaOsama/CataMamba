@@ -31,7 +31,7 @@ parser.add_argument(
     "--json_path",
     type=str,
     help="Path to the json file containing the dataset labels",
-    default="/l/users/dana.mohamed/Cataracts_Multitask/labels_dataset_level.json"
+    default="/l/users/dana.mohamed/Cataracts_Multitask/labels_dataset_level.json",
 )
 parser.add_argument(
     "--checkpoint_path",
@@ -59,11 +59,11 @@ parser.add_argument(
     "--step_size",
     type=int,
     help="Number of frames to skip when sampling clips",
-    default=1,
+    default=2,
 )
 
 parser.add_argument(
-    "--learning_rate", type=float, help="Learning rate for the optimizer", default=0.001
+    "--learning_rate", type=float, help="Learning rate for the optimizer", default=1e-3
 )
 parser.add_argument(
     "--epochs", type=int, help="Number of epochs for training the model", default=50
@@ -79,6 +79,12 @@ parser.add_argument(
     type=str,
     help="Loss function to use for training the model",
     default="CrossEntropyLoss",
+)
+parser.add_argument(
+    "--weighted_loss",
+    type=bool,
+    help="Whether to use weighted loss for the classes",
+    default=False,
 )
 parser.add_argument(
     "--optimizer",
@@ -201,7 +207,27 @@ architectures = {
 model = architectures[architecture]
 model.to(DEVICE)
 
-criterion = nn.CrossEntropyLoss() if args.loss_function == "CrossEntropyLoss" else None
+if args.criterion == "CrossEntropyLoss":
+    if args.weighted_loss and dataset == "2_Cataracts-101":
+        class_weights = np.asarray(
+            [
+                0.14646218027301622,
+                0.06436519502687946,
+                0.13925138143707333,
+                0.08091769409988665,
+                0.1068025674161425,
+                0.05078278272136941,
+                0.06068694240056498,
+                0.12584724154544782,
+                0.1312119837750025,
+                0.09367203130461713,
+            ],
+            dtype=np.float32,
+        )
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
+    else:
+        criterion = nn.CrossEntropyLoss()
+
 optimizer = (
     optim.Adam(model.parameters(), lr=learning_rate)
     if args.optimizer == "Adam"
@@ -216,7 +242,7 @@ if args.resume_training and args.wandb_run_id is not None:
     run_id = args.wandb_run_id
     wandb.init(project=project_name, id=run_id, resume="allow")
 
-else: # First time training
+else:  # First time training
     exp_name = (
         f"{architecture}___{cnn_model}_{rnn_model}_{num_clips}_{clip_size}"
         if architecture == "CNN_RNN"
@@ -247,7 +273,6 @@ transform = v2.Compose(
         v2.RandomCrop(224),
         v2.RandomHorizontalFlip(),
         v2.RandomEqualize(),
-
         # v2.ToTensor(),  # This converts PIL images to PyTorch tensors
         # v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Example normalization
     ]
@@ -378,13 +403,13 @@ if len(best_metrics) == 0:
 
     # Get last checkpoint to test the model
     ckpt = load_checkpoint(
-    model, optimizer,  checkpoint_path + f"last_epoch_{run_id}.pth"
-)
+        model, optimizer, checkpoint_path + f"last_epoch_{run_id}.pth"
+    )
 else:
     # Get the best validation checkpoint to test the model
     ckpt = load_checkpoint(
-    model, optimizer, checkpoint_path + f"best_model_{run_id}.pth")
-
+        model, optimizer, checkpoint_path + f"best_model_{run_id}.pth"
+    )
 
 
 model.load_state_dict(ckpt["model_state_dict"])
@@ -410,8 +435,6 @@ table.add_data("F1-Score", best_metrics["f1_score"])
 wandb.log({"validation_results_table": table}, commit=False)
 
 
-
-
 # Log the test results on Wandb
 table = wandb.Table(columns=["Metrics_Test_Set", "Value"])
 table.add_data("Accuracy", test_metrics["accuracy"])
@@ -425,7 +448,9 @@ if per_class_metrics:
     columns_per_class = ["Metric"] + [f"Phase_{i}" for i in range(num_classes)]
     table = wandb.Table(columns=columns_per_class)
     table.add_data(*(["Jaccard"] + [str(j) for j in test_metrics["jaccard_per_class"]]))
-    table.add_data(*(["Precision"] + [str(p) for p in test_metrics["precision_per_class"]]))
+    table.add_data(
+        *(["Precision"] + [str(p) for p in test_metrics["precision_per_class"]])
+    )
     table.add_data(*(["Recall"] + [str(r) for r in test_metrics["recall_per_class"]]))
     table.add_data(*(["F1-Score"] + [str(f) for f in test_metrics["f1_per_class"]]))
     wandb.log({"test_results_table_per_class": table}, commit=False)
@@ -454,15 +479,19 @@ wandb.run.summary["test_f1_score"] = test_metrics["f1_score"]
 create_confusion_matrix = True
 if create_confusion_matrix:
     cf_matrix = test_metrics["confusion_matrix"]
-    confusion_path = os.path.join(qualitative_results_path, f"confusion_matrix_{run_id}.png")
-    
+    confusion_path = os.path.join(
+        qualitative_results_path, f"confusion_matrix_{run_id}.png"
+    )
+
     save_confusion_matrix(cf_matrix, confusion_path)
     wandb.log({"confusion_matrix": wandb.Image(confusion_path)})
 
 # Save qualitative results
 create_qualitative_results = True
 if create_qualitative_results:
-    qualitative_results_path = os.path.join(qualitative_results_path, f"ribbon_diagram_{run_id}.png")
+    qualitative_results_path = os.path.join(
+        qualitative_results_path, f"ribbon_diagram_{run_id}.png"
+    )
     batch = next(iter(test_loader))
     make_qualitative_results(
         {f"{architecture}": model},
