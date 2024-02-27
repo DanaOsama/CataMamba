@@ -207,7 +207,7 @@ architectures = {
 model = architectures[architecture]
 model.to(DEVICE)
 
-if args.criterion == "CrossEntropyLoss":
+if args.loss_function == "CrossEntropyLoss":
     if args.weighted_loss and dataset == "2_Cataracts-101":
         class_weights = np.asarray(
             [
