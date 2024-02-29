@@ -1,6 +1,7 @@
 from models.cnn_rnn import CNN_RNN_Model
 from models.cnn import CNN
 from models.vit import ViT
+from models.mamba import mamba_cat
 import os
 import torch
 from torchvision.transforms import v2
@@ -104,7 +105,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--architecture",
-    choices=["CNN_RNN", "CNN", "ViT"],
+    choices=["CNN_RNN", "CNN", "ViT", "Mamba"],
     help="Model to use for training",
     default="CNN_RNN",
 )
@@ -203,6 +204,7 @@ architectures = {
     ),
     "CNN": CNN(cnn=cnn_model, num_classes=num_classes),
     "ViT": ViT(num_classes=num_classes),
+    "Mamba": mamba_cat(num_classes=num_classes),
 }
 model = architectures[architecture]
 model.to(DEVICE)
@@ -228,11 +230,27 @@ if args.loss_function == "CrossEntropyLoss":
     else:
         criterion = nn.CrossEntropyLoss()
 
-optimizer = (
-    optim.Adam(model.parameters(), lr=learning_rate)
-    if args.optimizer == "Adam"
-    else None
-)
+if args.architecture == "Vit":
+    # Separate the last linear layer parameters
+    last_linear_params = list(map(id, model.vit.heads.parameters()))
+    base_params = filter(lambda p: id(p) not in last_linear_params, model.parameters())
+
+    # Set different learning rates
+    base_lr = 1e-3  # Learning rate for the base parameters
+    last_lr = 1e-5   # Learning rate for the last linear layer
+
+    # Create parameter groups
+    optimizer = optim.Adam([
+        {'params': base_params, 'lr': base_lr},  # Base parameters
+        {'params': model.vit.heads.parameters(), 'lr': last_lr}  # Last linear layer parameters
+    ])
+
+else:
+    optimizer = (
+        optim.Adam(model.parameters(), lr=learning_rate)
+        if args.optimizer == "Adam"
+        else None
+    )
 # ####################################################################################################################################
 project_name = "Phase_detection"
 run_id = None

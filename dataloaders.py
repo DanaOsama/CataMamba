@@ -2,19 +2,14 @@ import torch
 import matplotlib.pyplot as plt
 
 # import ignite
-import tempfile
-import sys
-import shutil
-import os
-import logging
 import json
-from monai.data import CacheDataset, DataLoader
+# from monai.data import CacheDataset, DataLoader
 import numpy as np
 import os
 import pandas as pd
 from PIL import Image
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import torch.nn.functional as F
 
 
