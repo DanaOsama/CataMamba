@@ -22,3 +22,4 @@ python train.py
 # python train.py --hidden_size 256 --epochs 100 --num_clips -1 --cnn_model resnet18 --weighted_loss True
 # python train.py --architecture CNN --weighted_loss True --num_clips -1
 # python train.py --architecture ViT --epochs 150 
+# python train.py --architecture Mamba --epochs 1
