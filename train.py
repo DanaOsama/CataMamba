@@ -1,6 +1,7 @@
 from models.cnn_rnn import CNN_RNN_Model
 from models.cnn import CNN
 from models.vit import ViT
+
 # from models.mamba import mamba_cat
 import os
 import torch
@@ -67,7 +68,11 @@ parser.add_argument(
     "--learning_rate", type=float, help="Learning rate for the optimizer", default=1e-3
 )
 parser.add_argument(
-    "--scheduler", choices=["None", "StepLR", "Cosine"], help="Whether to use a scheduler for the optimizer", default="None")
+    "--scheduler",
+    choices=["None", "StepLR", "Cosine"],
+    help="Whether to use a scheduler for the optimizer",
+    default="None",
+)
 parser.add_argument(
     "--clip-grad-norm",
     type=bool,
@@ -105,7 +110,7 @@ parser.add_argument(
     "--weight_decay",
     type=float,
     help="Weight decay for the optimizer",
-    default=1e-2, # weight_decay 0.3 for ViT
+    default=1e-2,  # weight_decay 0.3 for ViT
 )
 
 parser.add_argument(
@@ -240,7 +245,9 @@ if args.loss_function == "CrossEntropyLoss":
             ],
             dtype=np.float32,
         )
-        criterion = nn.CrossEntropyLoss(weight=torch.tensor(class_weights).float().to(DEVICE))
+        criterion = nn.CrossEntropyLoss(
+            weight=torch.tensor(class_weights).float().to(DEVICE)
+        )
     else:
         criterion = nn.CrossEntropyLoss()
 
@@ -267,9 +274,15 @@ if args.loss_function == "CrossEntropyLoss":
 #     )
 
 optimizers = {
-    "Adam": optim.Adam(model.parameters(), lr=learning_rate, weight_decay=args.weight_decay),
-    "SGD": optim.SGD(model.parameters(), lr=learning_rate, weight_decay=args.weight_decay),
-    "AdamW": optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=args.weight_decay),
+    "Adam": optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=args.weight_decay
+    ),
+    "SGD": optim.SGD(
+        model.parameters(), lr=learning_rate, weight_decay=args.weight_decay
+    ),
+    "AdamW": optim.AdamW(
+        model.parameters(), lr=learning_rate, weight_decay=args.weight_decay
+    ),
 }
 optimizer = optimizers[args.optimizer]
 
@@ -387,9 +400,7 @@ start_time = time.time()
 
 if args.resume_training:
     # Load the model
-    ckpt = load_checkpoint(
-        checkpoint_path + f"last_epoch_{run_id}.pth"
-    )
+    ckpt = load_checkpoint(checkpoint_path + f"last_epoch_{run_id}.pth")
 
     start_epoch = ckpt["epoch"]
     model.load_state_dict(ckpt["model_state_dict"])
@@ -408,7 +419,7 @@ for epoch in range(start_epoch, epochs):
     # acc = validate(model, val_loader, DEVICE)
     # TODO: Check which metric I want to use to evaluate the best model
     metrics = validate(model, val_loader, DEVICE)
-    
+
     # Update the learning rate
     if scheduler:
         scheduler.step()
@@ -459,14 +470,10 @@ if len(best_metrics) == 0:
     best_metrics = metrics
 
     # Get last checkpoint to test the model
-    ckpt = load_checkpoint(
-        checkpoint_path + f"last_epoch_{run_id}.pth"
-    )
+    ckpt = load_checkpoint(checkpoint_path + f"last_epoch_{run_id}.pth")
 else:
     # Get the best validation checkpoint to test the model
-    ckpt = load_checkpoint(
-        checkpoint_path + f"best_model_{run_id}.pth"
-    )
+    ckpt = load_checkpoint(checkpoint_path + f"best_model_{run_id}.pth")
 
 
 model.load_state_dict(ckpt["model_state_dict"])
@@ -498,6 +505,7 @@ table.add_data("Accuracy", test_metrics["accuracy"])
 table.add_data("Precision", test_metrics["precision"])
 table.add_data("Recall", test_metrics["recall"])
 table.add_data("F1-Score", test_metrics["f1_score"])
+table.add_data("Jaccard", test_metrics["jaccard"])
 wandb.log({"test_results_table": table}, commit=False)
 
 
@@ -522,6 +530,7 @@ results.add_row(["Accuracy", test_metrics["accuracy"]])
 results.add_row(["Precision", test_metrics["precision"]])
 results.add_row(["Recall", test_metrics["recall"]])
 results.add_row(["F1-Score", test_metrics["f1_score"]])
+results.add_row(["Jaccard", test_metrics["jaccard"]])
 print(results)
 
 print("Run ID: ", wandb.run.id)
@@ -531,7 +540,7 @@ wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
 wandb.run.summary["test_precision"] = test_metrics["precision"]
 wandb.run.summary["test_recall"] = test_metrics["recall"]
 wandb.run.summary["test_f1_score"] = test_metrics["f1_score"]
-
+wandb.run.summary["test_jaccard"] = test_metrics["jaccard"]
 # Save confusion matrix
 create_confusion_matrix = True
 if create_confusion_matrix:
