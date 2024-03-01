@@ -1,5 +1,6 @@
 wandb/
 outputs/
 average_images.py
-
+__pycache__/
 qualitative_results/
+models/__pycache__/
