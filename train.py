@@ -1,7 +1,7 @@
 from models.cnn_rnn import CNN_RNN_Model
 from models.cnn import CNN
 from models.vit import ViT
-from models.mamba import mamba_cat
+# from models.mamba import mamba_cat
 import os
 import torch
 from torchvision.transforms import v2
@@ -67,6 +67,14 @@ parser.add_argument(
     "--learning_rate", type=float, help="Learning rate for the optimizer", default=1e-3
 )
 parser.add_argument(
+    "--scheduler", choices=["None", "StepLR", "Cosine"], help="Whether to use a scheduler for the optimizer", default="None")
+parser.add_argument(
+    "--clip-grad-norm",
+    type=bool,
+    help="Clip the gradient norm to prevent exploding gradients",
+    default=True,
+)
+parser.add_argument(
     "--epochs", type=int, help="Number of epochs for training the model", default=50
 )
 parser.add_argument(
@@ -92,6 +100,12 @@ parser.add_argument(
     type=str,
     help="Optimizer to use for training the model",
     default="Adam",
+)
+parser.add_argument(
+    "--weight_decay",
+    type=float,
+    help="Weight decay for the optimizer",
+    default=1e-2, # weight_decay 0.3 for ViT
 )
 
 parser.add_argument(
@@ -204,7 +218,7 @@ architectures = {
     ),
     "CNN": CNN(cnn=cnn_model, num_classes=num_classes),
     "ViT": ViT(num_classes=num_classes),
-    "Mamba": mamba_cat(num_classes=num_classes),
+    # "Mamba": mamba_cat(num_classes=num_classes),
 }
 model = architectures[architecture]
 model.to(DEVICE)
@@ -230,27 +244,46 @@ if args.loss_function == "CrossEntropyLoss":
     else:
         criterion = nn.CrossEntropyLoss()
 
-if args.architecture == "Vit":
-    # Separate the last linear layer parameters
-    last_linear_params = list(map(id, model.vit.heads.parameters()))
-    base_params = filter(lambda p: id(p) not in last_linear_params, model.parameters())
+# if args.architecture == "Vit":
+#     # Separate the last linear layer parameters
+#     last_linear_params = list(map(id, model.vit.heads.parameters()))
+#     base_params = filter(lambda p: id(p) not in last_linear_params, model.parameters())
 
-    # Set different learning rates
-    base_lr = 1e-3  # Learning rate for the base parameters
-    last_lr = 1e-5   # Learning rate for the last linear layer
+#     # Set different learning rates
+#     base_lr = 1e-3  # Learning rate for the base parameters
+#     last_lr = 1e-5   # Learning rate for the last linear layer
 
-    # Create parameter groups
-    optimizer = optim.Adam([
-        {'params': base_params, 'lr': base_lr},  # Base parameters
-        {'params': model.vit.heads.parameters(), 'lr': last_lr}  # Last linear layer parameters
-    ])
+#     # Create parameter groups
+#     optimizer = optim.Adam([
+#         {'params': base_params, 'lr': base_lr},  # Base parameters
+#         {'params': model.vit.heads.parameters(), 'lr': last_lr}  # Last linear layer parameters
+#     ])
 
-else:
-    optimizer = (
-        optim.Adam(model.parameters(), lr=learning_rate)
-        if args.optimizer == "Adam"
-        else None
-    )
+# else:
+#     optimizer = (
+#         optim.Adam(model.parameters(), lr=learning_rate)
+#         if args.optimizer == "Adam"
+#         else None
+#     )
+
+optimizers = {
+    "Adam": optim.Adam(model.parameters(), lr=learning_rate, weight_decay=args.weight_decay),
+    "SGD": optim.SGD(model.parameters(), lr=learning_rate, weight_decay=args.weight_decay),
+    "AdamW": optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=args.weight_decay),
+}
+optimizer = optimizers[args.optimizer]
+
+# Define the scheduler
+schedulers = {
+    "None": None,
+    "StepLR": optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5),
+    "Cosine": optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10),
+}
+scheduler = schedulers[args.scheduler]
+
+if args.clip_grad_norm:
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
 # ####################################################################################################################################
 project_name = "Phase_detection"
 run_id = None
@@ -355,7 +388,7 @@ start_time = time.time()
 if args.resume_training:
     # Load the model
     ckpt = load_checkpoint(
-        model, optimizer, checkpoint_path + f"last_epoch_{run_id}.pth"
+        checkpoint_path + f"last_epoch_{run_id}.pth"
     )
 
     start_epoch = ckpt["epoch"]
@@ -375,6 +408,11 @@ for epoch in range(start_epoch, epochs):
     # acc = validate(model, val_loader, DEVICE)
     # TODO: Check which metric I want to use to evaluate the best model
     metrics = validate(model, val_loader, DEVICE)
+    
+    # Update the learning rate
+    if scheduler:
+        scheduler.step()
+
     acc = metrics["accuracy"]
     wandb.log({"val_accuracy": acc})
     wandb.log({"val_precision": metrics["precision"]})
@@ -385,7 +423,7 @@ for epoch in range(start_epoch, epochs):
         f"[INFO] Epoch {epoch+1}/{epochs}, train loss: {loss:.4f}, val accuracy: {acc:.4f}"
     )
     save_checkpoint(
-        model, optimizer, epoch, checkpoint_path + f"last_epoch_{run_id}.pth"
+        model, optimizer, epoch, checkpoint_path + f"last_epoch_{run_id}.pth", scheduler
     )  # save checkpoint after each epoch
     if acc > best_val_acc:
         best_val_acc = acc
@@ -395,6 +433,7 @@ for epoch in range(start_epoch, epochs):
             optimizer,
             epoch,
             checkpoint_path + f"best_model_{run_id}.pth",
+            scheduler,
             best=True,
         )
         best_val_epoch = epoch
@@ -421,12 +460,12 @@ if len(best_metrics) == 0:
 
     # Get last checkpoint to test the model
     ckpt = load_checkpoint(
-        model, optimizer, checkpoint_path + f"last_epoch_{run_id}.pth"
+        checkpoint_path + f"last_epoch_{run_id}.pth"
     )
 else:
     # Get the best validation checkpoint to test the model
     ckpt = load_checkpoint(
-        model, optimizer, checkpoint_path + f"best_model_{run_id}.pth"
+        checkpoint_path + f"best_model_{run_id}.pth"
     )
 
 
