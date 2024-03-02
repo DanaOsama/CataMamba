@@ -55,7 +55,7 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
         optimizer.zero_grad()  # Zero the gradients
         predictions = model(inputs)
         batch_size, num_frames, num_classes = predictions.size()
-        predictions = predictions.view(batch_size * num_frames, num_classes)
+        predictions = predictions.reshape(batch_size * num_frames, num_classes)
         labels = torch.argmax(labels, dim=-1)
         labels = labels.view(-1)
         total_frames += num_frames*batch_size

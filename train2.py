@@ -74,24 +74,11 @@ parser.add_argument(
     default="None",
 )
 parser.add_argument(
-    "--clip-grad-norm",
+    "--clip_grad_norm",
     type=bool,
     help="Clip the gradient norm to prevent exploding gradients",
     default=True,
 )
-######################### Mamba specific parameters ############################
-parser.add_argument(
-    "--d_state", type=int, help="SSM state expansion factor", default=16)
-parser.add_argument(
-    "--d_conv", type=int, help="Local convolution width", default=4)
-parser.add_argument(
-    "--expand", type=int, help="Block expansion factor", default=2)
-parser.add_argument(
-    "--mamba_num_blocks", type=int, help="Number of Mamba blocks", default=2)
-parser.add_argument(
-    "--dilation_levels", type=int, help="Number of dilation levels in the 1D Conv in Cata-Mamba", default=3)
-
-################################################################################
 parser.add_argument(
     "--epochs", type=int, help="Number of epochs for training the model", default=50
 )
@@ -139,7 +126,7 @@ parser.add_argument(
     "--architecture",
     choices=["CNN_RNN", "CNN", "ViT", "Mamba"],
     help="Model to use for training",
-    default="CNN_RNN",
+    default="Mamba",
 )
 parser.add_argument(
     "--cnn_model",
@@ -163,6 +150,23 @@ parser.add_argument(
     default=False,
 )
 
+######################### Cata-Mamba specific parameters ############################
+parser.add_argument(
+    "--d_state", type=int, help="SSM state expansion factor", default=16
+)
+parser.add_argument("--d_conv", type=int, help="Local convolution width", default=4)
+parser.add_argument("--expand", type=int, help="Block expansion factor", default=2)
+parser.add_argument(
+    "--mamba_num_blocks", type=int, help="Number of Mamba blocks", default=2
+)
+parser.add_argument(
+    "--dilation_levels",
+    type=int,
+    help="Number of dilation levels in the 1D Conv in Cata-Mamba",
+    default=3,
+)
+
+################################################################################
 parser.add_argument(
     "--resume_training",
     type=bool,
@@ -222,6 +226,8 @@ num_clips = args.num_clips
 clip_size = args.clip_size
 step_size = args.step_size
 
+
+# TODO: Add more processing for those two parameters
 architecture = args.architecture
 architectures = {
     "CNN_RNN": CNN_RNN_Model(
