@@ -16,4 +16,4 @@ module load conda
 eval "$(conda shell.bash hook)"
 conda activate multitask # name of the conda environment
 
-python train.py --architecture Mamba --epochs 50 --num_clips -1 --optimizer AdamW --scheduler Cosine --dilation_levels 3 --cnn_model resnet18  
+python train.py --architecture TimeSformer --epochs 1 --num_clips 2 --clip_size 48 --step_size 2 --batch_size 1 --optimizer SGD --momentum 0.9 --weight_decay 0.0001 --learning_rate 0.005 --path_pretrained_TimeSformer /l/users/dana.mohamed/TimeSformer_divST_96x32_224_HowTo100M.pyth

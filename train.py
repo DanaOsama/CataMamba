@@ -3,6 +3,7 @@ from models.cnn import CNN
 from models.vit import ViT
 
 from models.mamba import cata_mamba
+from timesformer.models.vit import TimeSformer
 import os
 import torch
 from torchvision.transforms import v2
@@ -34,6 +35,12 @@ parser.add_argument(
     type=str,
     help="Path to the json file containing the dataset labels",
     default="/l/users/dana.mohamed/Cataracts_Multitask/labels_dataset_level.json",
+)
+parser.add_argument(
+    "--path_pretrained_TimeSformer",
+    type=str,
+    help="Path to the pretrained TimeSformer model",
+    default="/l/users/dana.mohamed/TimeSformer_divST_96x32_224_HowTo100M.pyth",
 )
 parser.add_argument(
     "--checkpoint_path",
@@ -74,6 +81,12 @@ parser.add_argument(
     default="None",
 )
 parser.add_argument(
+    "--momentum",
+    type=float,
+    help="Momentum for the optimizer (SGD only)",
+    default=0.0,
+)
+parser.add_argument(
     "--clip-grad-norm",
     type=bool,
     help="Clip the gradient norm to prevent exploding gradients",
@@ -81,15 +94,19 @@ parser.add_argument(
 )
 ######################### Mamba specific parameters ############################
 parser.add_argument(
-    "--d_state", type=int, help="SSM state expansion factor", default=16)
+    "--d_state", type=int, help="SSM state expansion factor", default=16
+)
+parser.add_argument("--d_conv", type=int, help="Local convolution width", default=4)
+parser.add_argument("--expand", type=int, help="Block expansion factor", default=2)
 parser.add_argument(
-    "--d_conv", type=int, help="Local convolution width", default=4)
+    "--mamba_num_blocks", type=int, help="Number of Mamba blocks", default=2
+)
 parser.add_argument(
-    "--expand", type=int, help="Block expansion factor", default=2)
-parser.add_argument(
-    "--mamba_num_blocks", type=int, help="Number of Mamba blocks", default=2)
-parser.add_argument(
-    "--dilation_levels", type=int, help="Number of dilation levels in the 1D Conv in Cata-Mamba", default=3)
+    "--dilation_levels",
+    type=int,
+    help="Number of dilation levels in the 1D Conv in Cata-Mamba",
+    default=3,
+)
 
 ################################################################################
 parser.add_argument(
@@ -112,6 +129,12 @@ parser.add_argument(
     type=bool,
     help="Whether to use weighted loss for the classes",
     default=False,
+)
+parser.add_argument(
+    "--label_smoothing",
+    type=float,
+    help="Label smoothing factor for the loss function",
+    default=0.0,
 )
 parser.add_argument(
     "--optimizer",
@@ -137,7 +160,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--architecture",
-    choices=["CNN_RNN", "CNN", "ViT", "Mamba"],
+    choices=["CNN_RNN", "CNN", "ViT", "Mamba", "TimeSformer"],
     help="Model to use for training",
     default="CNN_RNN",
 )
@@ -243,6 +266,13 @@ architectures = {
         dilation_levels=args.dilation_levels,
         feature_extractor=cnn_model,
     ),
+    "TimeSformer": TimeSformer(
+        img_size=224,
+        num_classes=num_classes,
+        num_frames=96,
+        attention_type="divided_space_time",
+        pretrained_model=args.path_pretrained_TimeSformer,
+    ),
 }
 model = architectures[architecture]
 model.to(DEVICE)
@@ -265,17 +295,18 @@ if args.loss_function == "CrossEntropyLoss":
             dtype=np.float32,
         )
         criterion = nn.CrossEntropyLoss(
-            weight=torch.tensor(class_weights).float().to(DEVICE)
+            weight=torch.tensor(class_weights).float().to(DEVICE),
+            label_smoothing=args.label_smoothing,
         )
     else:
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss(label_smoothing=args.label_smoothing)
 
 optimizers = {
     "Adam": optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=args.weight_decay
     ),
     "SGD": optim.SGD(
-        model.parameters(), lr=learning_rate, weight_decay=args.weight_decay
+        model.parameters(), lr=learning_rate, weight_decay=args.weight_decay, momentum=args.momentum
     ),
     "AdamW": optim.AdamW(
         model.parameters(), lr=learning_rate, weight_decay=args.weight_decay

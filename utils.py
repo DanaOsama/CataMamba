@@ -49,11 +49,13 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
     model.train()  # Set the model to training mode
     running_loss = 0.0
     total_frames = 0
+    losses = []
 
     for inputs, labels in tqdm(train_loader):
         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
         optimizer.zero_grad()  # Zero the gradients
         predictions = model(inputs)
+        breakpoint()
         batch_size, num_frames, num_classes = predictions.size()
         predictions = predictions.reshape(batch_size * num_frames, num_classes)
         labels = torch.argmax(labels, dim=-1)
@@ -68,10 +70,10 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
         loss.backward()
         optimizer.step()
 
-        running_loss += loss.item()
+        losses.append(loss.item())
 
     # return running_loss / len(train_loader)
-    return running_loss / total_frames
+    return sum(losses) / len(losses)
 
 
 def validate(model, validation_loader, DEVICE, per_class_metrics=True):
@@ -96,12 +98,12 @@ def validate(model, validation_loader, DEVICE, per_class_metrics=True):
 
     # Calculate metrics
     precision = precision_score(
-        all_labels, all_predicted, zero_division=0, average="macro"
+        all_labels, all_predicted, zero_division=0, average="micro"
     )
-    recall = recall_score(all_labels, all_predicted, zero_division=0, average="macro")
-    f1 = f1_score(all_labels, all_predicted, zero_division=0, average="macro")
+    recall = recall_score(all_labels, all_predicted, zero_division=0, average="micro")
+    f1 = f1_score(all_labels, all_predicted, zero_division=0, average="micro")
     accuracy = accuracy_score(all_labels, all_predicted)
-    jaccard = jaccard_score(all_labels, all_predicted, average="macro")
+    jaccard = jaccard_score(all_labels, all_predicted, average="micro")
     cf_matrix = confusion_matrix(all_labels, all_predicted)
     
     # Per class metrics, where the averaging is set to None.
