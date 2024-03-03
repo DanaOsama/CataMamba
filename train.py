@@ -160,7 +160,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--architecture",
-    choices=["CNN_RNN", "CNN", "ViT", "Mamba", "TimeSformer"],
+    choices=["CNN_RNN", "CNN", "ViT", "Cata-Mamba", "TimeSformer"],
     help="Model to use for training",
     default="CNN_RNN",
 )
@@ -197,6 +197,12 @@ parser.add_argument(
     "--wandb_run_id",
     type=str,
     help="Used when resuming training for a specific model to resume the wandb run",
+    default=None,
+)
+parser.add_argument(
+    "--run_name",
+    type=str,
+    help="Name of the run to be displayed on Wandb",
     default=None,
 )
 
@@ -257,7 +263,7 @@ architectures = {
     ),
     "CNN": CNN(cnn=cnn_model, num_classes=num_classes),
     "ViT": ViT(num_classes=num_classes),
-    "Mamba": cata_mamba(
+    "Cata-Mamba": cata_mamba(
         d_state=args.d_state,
         d_conv=args.d_conv,
         expand=args.expand,
@@ -326,7 +332,7 @@ if args.clip_grad_norm:
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
 # ####################################################################################################################################
-project_name = "Phase_detection"
+project_name = args.architecture
 run_id = None
 
 # Add Wandb logging
@@ -335,18 +341,21 @@ if args.resume_training and args.wandb_run_id is not None:
     wandb.init(project=project_name, id=run_id, resume="allow")
 
 else:  # First time training
-    exp_name = (
-        f"{architecture}___{cnn_model}_{rnn_model}_{num_clips}_{clip_size}"
-        if architecture == "CNN_RNN"
-        else f"{architecture}___{cnn_model}_{num_clips}_{clip_size}"
-    )
-    wandb.init(
-        # set the wandb project where this run will be logged
-        project=project_name,
-        name=exp_name,
-        # track hyperparameters and run metadata
-        config=args,
-    )
+    if args.run_name:
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project=project_name,
+            name=args.run_name,
+            # track hyperparameters and run metadata
+            config=args,
+        )
+    else:
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project=project_name,
+            # track hyperparameters and run metadata
+            config=args,
+        )
 
 run_id = wandb.run.id
 print(f"[INFO] Run ID: {run_id}")
@@ -514,26 +523,52 @@ print("#################")
 results = PrettyTable()
 results.field_names = ["Metric", "Value"]
 results.add_row(["Accuracy", best_metrics["accuracy"]])
-results.add_row(["Precision", best_metrics["precision"]])
-results.add_row(["Recall", best_metrics["recall"]])
-results.add_row(["F1-Score", best_metrics["f1_score"]])
+results.add_row(["Precision_micro", best_metrics["precision_micro"]])
+results.add_row(["Recall_micro", best_metrics["recall_micro"]])
+results.add_row(["F1-Score_micro", best_metrics["f1_score_micro"]])
+results.add_row(["Jaccard_micro", best_metrics["jaccard_micro"]])
+results.add_row(["Precision_macro", best_metrics["precision_macro"]])
+results.add_row(["Recall_macro", best_metrics["recall_macro"]])
+results.add_row(["F1-Score_macro", best_metrics["f1_score_macro"]])
+results.add_row(["Jaccard_macro", best_metrics["jaccard_macro"]])
+results.add_row(["Precision_weighted", best_metrics["precision_weighted"]])
+results.add_row(["Recall_weighted", best_metrics["recall_weighted"]])
+results.add_row(["F1-Score_weighted", best_metrics["f1_score_weighted"]])
+results.add_row(["Jaccard_weighted", best_metrics["jaccard_weighted"]])
 print(results)
 
 table = wandb.Table(columns=["Metrics_Validation_Set", "Value"])
 table.add_data("Accuracy", best_metrics["accuracy"])
-table.add_data("Precision", best_metrics["precision"])
-table.add_data("Recall", best_metrics["recall"])
-table.add_data("F1-Score", best_metrics["f1_score"])
+table.add_data("Precision_micro", best_metrics["precision_micro"])
+table.add_data("Recall_micro", best_metrics["recall_micro"])
+table.add_data("F1-Score_micro", best_metrics["f1_score_micro"])
+table.add_data("Jaccard_micro", best_metrics["jaccard_micro"])
+table.add_data("Precision_macro", best_metrics["precision_macro"])
+table.add_data("Recall_macro", best_metrics["recall_macro"])
+table.add_data("F1-Score_macro", best_metrics["f1_score_macro"])
+table.add_data("Jaccard_macro", best_metrics["jaccard_macro"])
+table.add_data("Precision_weighted", best_metrics["precision_weighted"])
+table.add_data("Recall_weighted", best_metrics["recall_weighted"])
+table.add_data("F1-Score_weighted", best_metrics["f1_score_weighted"])
+table.add_data("Jaccard_weighted", best_metrics["jaccard_weighted"])
 wandb.log({"validation_results_table": table}, commit=False)
 
 
 # Log the test results on Wandb
 table = wandb.Table(columns=["Metrics_Test_Set", "Value"])
 table.add_data("Accuracy", test_metrics["accuracy"])
-table.add_data("Precision", test_metrics["precision"])
-table.add_data("Recall", test_metrics["recall"])
-table.add_data("F1-Score", test_metrics["f1_score"])
-table.add_data("Jaccard", test_metrics["jaccard"])
+table.add_data("Precision_micro", test_metrics["precision_micro_micro"])
+table.add_data("Recall_micro", test_metrics["recall_micro"])
+table.add_data("F1-Score_micro", test_metrics["f1_score_micro"])
+table.add_data("Jaccard_micro", test_metrics["jaccard_micro"])
+table.add_data("Precision_macro", test_metrics["precision_macro"])
+table.add_data("Recall_macro", test_metrics["recall_macro"])
+table.add_data("F1-Score_macro", test_metrics["f1_score_macro"])
+table.add_data("Jaccard_macro", test_metrics["jaccard_macro"])
+table.add_data("Precision_weighted", test_metrics["precision_weighted"])
+table.add_data("Recall_weighted", test_metrics["recall_weighted"])
+table.add_data("F1-Score_weighted", test_metrics["f1_score_weighted"])
+table.add_data("Jaccard_weighted", test_metrics["jaccard_weighted"])
 wandb.log({"test_results_table": table}, commit=False)
 
 
@@ -555,20 +590,38 @@ print("#################")
 results = PrettyTable()
 results.field_names = ["Metric", "Value"]
 results.add_row(["Accuracy", test_metrics["accuracy"]])
-results.add_row(["Precision", test_metrics["precision"]])
-results.add_row(["Recall", test_metrics["recall"]])
-results.add_row(["F1-Score", test_metrics["f1_score"]])
-results.add_row(["Jaccard", test_metrics["jaccard"]])
+results.add_row(["Precision_micro", test_metrics["precision_micro"]])
+results.add_row(["Recall_micro", test_metrics["recall_micro"]])
+results.add_row(["F1-Score_micro", test_metrics["f1_score_micro"]])
+results.add_row(["Jaccard_micro", test_metrics["jaccard_micro"]])
+results.add_row(["Precision_macro", test_metrics["precision_macro"]])
+results.add_row(["Recall_macro", test_metrics["recall_macro"]])
+results.add_row(["F1-Score_macro", test_metrics["f1_score_macro"]])
+results.add_row(["Jaccard_macro", test_metrics["jaccard_macro"]])
+results.add_row(["Precision_weighted", test_metrics["precision_weighted"]])
+results.add_row(["Recall_weighted", test_metrics["recall_weighted"]])
+results.add_row(["F1-Score_weighted", test_metrics["f1_score_weighted"]])
+results.add_row(["Jaccard_weighted", test_metrics["jaccard_weighted"]])
+
 print(results)
 
 print("Run ID: ", wandb.run.id)
 print("Run URL: ", wandb.run.get_url())
 
-wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
-wandb.run.summary["test_precision"] = test_metrics["precision"]
-wandb.run.summary["test_recall"] = test_metrics["recall"]
-wandb.run.summary["test_f1_score"] = test_metrics["f1_score"]
-wandb.run.summary["test_jaccard"] = test_metrics["jaccard"]
+wandb.run.summary["test_accuracy_micro"] = test_metrics["accuracy"]
+wandb.run.summary["test_precision_micro"] = test_metrics["precision_micro"]
+wandb.run.summary["test_recall_micro"] = test_metrics["recall_micro"]
+wandb.run.summary["test_f1_score_micro"] = test_metrics["f1_score_micro"]
+wandb.run.summary["test_jaccard_micro"] = test_metrics["jaccard_micro"]
+wandb.run.summary["test_precision_macro"] = test_metrics["precision_macro"]
+wandb.run.summary["test_recall_macro"] = test_metrics["recall_macro"]
+wandb.run.summary["test_f1_score_macro"] = test_metrics["f1_score_macro"]
+wandb.run.summary["test_jaccard_macro"] = test_metrics["jaccard_macro"]
+wandb.run.summary["test_precision_weighted"] = test_metrics["precision_weighted"]
+wandb.run.summary["test_recall_weighted"] = test_metrics["recall_weighted"]
+wandb.run.summary["test_f1_score_weighted"] = test_metrics["f1_score_weighted"]
+wandb.run.summary["test_jaccard_weighted"] = test_metrics["jaccard_weighted"]
+
 # Save confusion matrix
 create_confusion_matrix = True
 if create_confusion_matrix:

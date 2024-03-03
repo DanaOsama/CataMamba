@@ -16,6 +16,8 @@ module load conda
 eval "$(conda shell.bash hook)"
 conda activate multitask # name of the conda environment
 
-python train.py --epochs 200 --num_clips -1 --optimizer AdamW --num_clips 8 \
+python train.py --architecture ViT --epochs 200 --optimizer AdamW --num_clips 8 \
     --clip_size 18 --step_size 2 --weight_decay 0.3 --learning_rate 0.003 \
     --label_smoothing 0.11 --scheduler Cosine
+
+# python train.py --architecture ViT --epochs 50 --optimizer AdamW --num_clips 8 --clip_size 18 --step_size 2 --weight_decay 0.3 --learning_rate 0.003 --label_smoothing 0.11 --scheduler Cosine

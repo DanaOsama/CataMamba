@@ -23,3 +23,4 @@ python train.py
 # python train.py --architecture CNN --weighted_loss True --num_clips -1
 # python train.py --architecture ViT --epochs 150 
 # python train.py --architecture Mamba --epochs 1
+# bash scripts/train_clips_resnet50_lstm.sh

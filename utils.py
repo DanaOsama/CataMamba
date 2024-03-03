@@ -44,6 +44,34 @@ def load_checkpoint(path):
     print("[INFO] checkpoint loaded")
     return ckpt
 
+# def train(model, optimizer, criterion, train_loader, DEVICE):
+#     model.train()  # Set the model to training mode
+#     running_loss = 0.0
+#     total_frames = 0
+
+#     for inputs, labels in tqdm(train_loader):
+#         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
+#         optimizer.zero_grad()  # Zero the gradients
+#         predictions = model(inputs)
+#         batch_size, num_frames, num_classes = predictions.size()
+#         predictions = predictions.reshape(batch_size, num_classes, num_frames)
+#         # predictions = predictions.reshape(batch_size * num_frames, num_classes)
+#         # print(labels.shape)
+#         labels = torch.argmax(labels, dim=-1)
+#         # labels = labels.view(-1)
+#         total_frames += num_frames*batch_size
+
+#         # Expected input shape: (batch_size * num_frames, num_classes)
+#         # Expected label shape: (batch_size * num_frames) where each label is a class index
+#         loss = criterion(predictions, labels)
+
+#         # Backpropagation and optimization
+#         loss.backward()
+#         optimizer.step()
+
+#         # losses.append(loss.item())
+#         running_loss += loss.item()
+#     return running_loss / total_frames
 
 def train(model, optimizer, criterion, train_loader, DEVICE):
     model.train()  # Set the model to training mode
@@ -55,7 +83,6 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
         optimizer.zero_grad()  # Zero the gradients
         predictions = model(inputs)
-        breakpoint()
         batch_size, num_frames, num_classes = predictions.size()
         predictions = predictions.reshape(batch_size * num_frames, num_classes)
         labels = torch.argmax(labels, dim=-1)
@@ -69,11 +96,11 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
         # Backpropagation and optimization
         loss.backward()
         optimizer.step()
-
-        losses.append(loss.item())
+        running_loss += loss.item()
+        # losses.append(loss.item())
 
     # return running_loss / len(train_loader)
-    return sum(losses) / len(losses)
+    return running_loss / total_frames
 
 
 def validate(model, validation_loader, DEVICE, per_class_metrics=True):
@@ -97,14 +124,31 @@ def validate(model, validation_loader, DEVICE, per_class_metrics=True):
     all_labels = np.concatenate(all_labels)
 
     # Calculate metrics
-    precision = precision_score(
+    # TODO: micro or macro or weighted?
+    precision_micro = precision_score(
         all_labels, all_predicted, zero_division=0, average="micro"
     )
-    recall = recall_score(all_labels, all_predicted, zero_division=0, average="micro")
-    f1 = f1_score(all_labels, all_predicted, zero_division=0, average="micro")
+    recall_micro = recall_score(all_labels, all_predicted, zero_division=0, average="micro")
+    f1_micro = f1_score(all_labels, all_predicted, zero_division=0, average="micro")
     accuracy = accuracy_score(all_labels, all_predicted)
-    jaccard = jaccard_score(all_labels, all_predicted, average="micro")
+    jaccard_micro = jaccard_score(all_labels, all_predicted, average="micro")
     cf_matrix = confusion_matrix(all_labels, all_predicted)
+
+    recall_macro = recall_score(all_labels, all_predicted, zero_division=0, average="macro")
+    precision_macro = precision_score(
+        all_labels, all_predicted, zero_division=0, average="macro"
+    )
+    f1_macro = f1_score(all_labels, all_predicted, zero_division=0, average="macro")
+    jaccard_macro = jaccard_score(all_labels, all_predicted, average="macro")
+
+    recall_weighted = recall_score(
+        all_labels, all_predicted, zero_division=0, average="weighted"
+    )
+    precision_weighted = precision_score(
+        all_labels, all_predicted, zero_division=0, average="weighted"
+    )
+    f1_weighted = f1_score(all_labels, all_predicted, zero_division=0, average="weighted")
+    jaccard_weighted = jaccard_score(all_labels, all_predicted, average="weighted")
     
     # Per class metrics, where the averaging is set to None.
     precision_per_class = precision_score(all_labels, all_predicted, zero_division=1.0, average=None)
@@ -114,11 +158,19 @@ def validate(model, validation_loader, DEVICE, per_class_metrics=True):
 
     metrics = {
         "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1,
-        "jaccard": jaccard,
+        "precision_micro": precision_micro,
+        "recall_micro": recall_micro,
+        "f1_score_micro": f1_micro,
+        "jaccard_micro": jaccard_micro,
         "confusion_matrix": cf_matrix,
+        "precision_macro": precision_macro,
+        "recall_macro": recall_macro,
+        "f1_score_macro": f1_macro,
+        "jaccard_macro": jaccard_macro,
+        "precision_weighted": precision_weighted,
+        "recall_weighted": recall_weighted,
+        "f1_score_weighted": f1_weighted,
+        "jaccard_weighted": jaccard_weighted,
     }
     if per_class_metrics:
         metrics["precision_per_class"] = precision_per_class

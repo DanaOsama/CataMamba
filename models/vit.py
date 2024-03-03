@@ -23,7 +23,7 @@ class ViT(nn.Module):
 
         self.vit.num_classes = num_classes
         self.vit.heads = nn.Linear(self.vit.hidden_dim, num_classes)
-
+        # TODO: Check this. Where is it coming from? 
         self.vit.image_size = image_size
         self.vit.patch_size = patch_size
         self.vit.hidden_dim = hidden_dim
