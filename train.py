@@ -206,12 +206,18 @@ parser.add_argument(
     default=None,
 )
 
+parser.add_argument(
+    "--seed",
+    type=int,
+    help="Seed for reproducibility",
+    default=0,
+)
 # Parse the command-line arguments
 args = parser.parse_args()
 
 # Set the seed for reproducibility
-torch.manual_seed(0)
-
+torch.manual_seed(args.seed)
+np.random.seed(args.seed)
 # Set the device to GPU if available
 DEVICE = (
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -287,16 +293,16 @@ if args.loss_function == "CrossEntropyLoss":
     if args.weighted_loss and dataset == "2_Cataracts-101":
         class_weights = np.asarray(
             [
-                0.14646218027301622,
-                0.06436519502687946,
-                0.13925138143707333,
-                0.08091769409988665,
-                0.1068025674161425,
-                0.05078278272136941,
-                0.06068694240056498,
-                0.12584724154544782,
-                0.1312119837750025,
-                0.09367203130461713,
+                0.21870906927865919,
+                0.0480576346467981,
+                0.20794132637585014,
+                0.060416393951572174,
+                0.07974307794890623,
+                0.018958230588380327,
+                0.045311303795470353,
+                0.1879251900960704,
+                0.09796812663905301,
+                0.03496964667924019,
             ],
             dtype=np.float32,
         )
@@ -312,7 +318,10 @@ optimizers = {
         model.parameters(), lr=learning_rate, weight_decay=args.weight_decay
     ),
     "SGD": optim.SGD(
-        model.parameters(), lr=learning_rate, weight_decay=args.weight_decay, momentum=args.momentum
+        model.parameters(),
+        lr=learning_rate,
+        weight_decay=args.weight_decay,
+        momentum=args.momentum,
     ),
     "AdamW": optim.AdamW(
         model.parameters(), lr=learning_rate, weight_decay=args.weight_decay
@@ -373,7 +382,8 @@ transform = v2.Compose(
         v2.Resize((250, 250)),  # Example resize, adjust as needed
         v2.RandomCrop(224),
         v2.RandomHorizontalFlip(),
-        v2.RandomEqualize(),
+        v2.RandomRotation(5),
+        # v2.RandomEqualize(),
         # v2.ToTensor(),  # This converts PIL images to PyTorch tensors
         # v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Example normalization
     ]
@@ -463,9 +473,9 @@ for epoch in range(start_epoch, epochs):
 
     acc = metrics["accuracy"]
     wandb.log({"val_accuracy": acc})
-    wandb.log({"val_precision": metrics["precision"]})
-    wandb.log({"val_recall": metrics["recall"]})
-    wandb.log({"val_f1_score": metrics["f1_score"]})
+    wandb.log({"val_precision": metrics["precision_micro"]})
+    wandb.log({"val_recall": metrics["recall_micro"]})
+    wandb.log({"val_f1_score": metrics["f1_score_micro"]})
 
     print(
         f"[INFO] Epoch {epoch+1}/{epochs}, train loss: {loss:.4f}, val accuracy: {acc:.4f}"
@@ -557,7 +567,7 @@ wandb.log({"validation_results_table": table}, commit=False)
 # Log the test results on Wandb
 table = wandb.Table(columns=["Metrics_Test_Set", "Value"])
 table.add_data("Accuracy", test_metrics["accuracy"])
-table.add_data("Precision_micro", test_metrics["precision_micro_micro"])
+table.add_data("Precision_micro", test_metrics["precision_micro"])
 table.add_data("Recall_micro", test_metrics["recall_micro"])
 table.add_data("F1-Score_micro", test_metrics["f1_score_micro"])
 table.add_data("Jaccard_micro", test_metrics["jaccard_micro"])
@@ -608,7 +618,7 @@ print(results)
 print("Run ID: ", wandb.run.id)
 print("Run URL: ", wandb.run.get_url())
 
-wandb.run.summary["test_accuracy_micro"] = test_metrics["accuracy"]
+wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
 wandb.run.summary["test_precision_micro"] = test_metrics["precision_micro"]
 wandb.run.summary["test_recall_micro"] = test_metrics["recall_micro"]
 wandb.run.summary["test_f1_score_micro"] = test_metrics["f1_score_micro"]

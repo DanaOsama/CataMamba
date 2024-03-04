@@ -18,6 +18,6 @@ conda activate multitask # name of the conda environment
 
 python train.py --architecture ViT --epochs 200 --optimizer AdamW --num_clips 8 \
     --clip_size 18 --step_size 2 --weight_decay 0.3 --learning_rate 0.003 \
-    --label_smoothing 0.11 --scheduler Cosine
+    --label_smoothing 0.11 --scheduler Cosine --clip-grad-norm True
 
-# python train.py --architecture ViT --epochs 50 --optimizer AdamW --num_clips 8 --clip_size 18 --step_size 2 --weight_decay 0.3 --learning_rate 0.003 --label_smoothing 0.11 --scheduler Cosine
+# python train.py --run_name learning_rate_5e-3 --architecture ViT --epochs 50 --optimizer AdamW --num_clips 8 --clip_size 18 --step_size 2 --weight_decay 0.3 --learning_rate 5e-5 --label_smoothing 0.11 --scheduler Cosine --clip-grad-norm False
