@@ -212,6 +212,18 @@ parser.add_argument(
     help="Seed for reproducibility",
     default=0,
 )
+parser.add_argument(
+    "--create_qualitative_results",
+    type=bool,
+    help="Whether to create qualitative results",
+    default=True,
+)
+parser.add_argument(
+    "--log_results",
+    type=bool,
+    help="Whether to log the results on Wandb",
+    default=True,
+)
 # Parse the command-line arguments
 args = parser.parse_args()
 
@@ -340,16 +352,22 @@ scheduler = schedulers[args.scheduler]
 if args.clip_grad_norm:
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
+# Logging
+log_results = args.log_results
 # ####################################################################################################################################
-project_name = args.architecture
-run_id = None
+if log_results:
+    project_name = args.architecture
+    run_id = None
+else:
+    #generate random integer
+    run_id = np.random.randint(0, 1000000)
 
 # Add Wandb logging
 if args.resume_training and args.wandb_run_id is not None:
     run_id = args.wandb_run_id
     wandb.init(project=project_name, id=run_id, resume="allow")
 
-else:  # First time training
+elif log_results:  # First time training
     if args.run_name:
         wandb.init(
             # set the wandb project where this run will be logged
@@ -365,16 +383,21 @@ else:  # First time training
             # track hyperparameters and run metadata
             config=args,
         )
+    run_id = wandb.run.id
+    print(f"[INFO] Run ID: {run_id}")
+else:
+    print("[INFO] Logging is disabled")
 
-run_id = wandb.run.id
-print(f"[INFO] Run ID: {run_id}")
+
 
 # number of parameters in the model
+num_params = sum(p.numel() for p in model.parameters())
 print(
-    "[INFO] number of parameters in the model: {}".format(
-        sum(p.numel() for p in model.parameters())
+    "[INFO] number of parameters in the model: {}".format(num_params)
     )
-)
+
+if log_results:
+    wandb.log({"num_model_params": num_params})
 
 # Transforms
 transform = v2.Compose(
@@ -432,7 +455,7 @@ test_dataset = Cataracts_101_21_v2(
 if num_clips == -1:
     train_loader = DataLoader(train_dataset, batch_size=1)
     val_loader = DataLoader(val_dataset, batch_size=1)
-    test_loader = DataLoader(test_dataset, batch_size=1)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 else:
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
@@ -461,7 +484,8 @@ for epoch in range(start_epoch, epochs):
     # run training loop
     print("[INFO] starting training epoch {}".format(str(epoch + 1)))
     loss = train(model, optimizer, criterion, train_loader, DEVICE)
-    wandb.log({"train_loss": loss})
+    if log_results:
+        wandb.log({"train_loss": loss})
 
     # acc = validate(model, val_loader, DEVICE)
     # TODO: Check which metric I want to use to evaluate the best model
@@ -472,10 +496,11 @@ for epoch in range(start_epoch, epochs):
         scheduler.step()
 
     acc = metrics["accuracy"]
-    wandb.log({"val_accuracy": acc})
-    wandb.log({"val_precision": metrics["precision_micro"]})
-    wandb.log({"val_recall": metrics["recall_micro"]})
-    wandb.log({"val_f1_score": metrics["f1_score_micro"]})
+    if log_results:
+        wandb.log({"val_accuracy": acc})
+        wandb.log({"val_precision": metrics["precision_micro"]})
+        wandb.log({"val_recall": metrics["recall_micro"]})
+        wandb.log({"val_f1_score": metrics["f1_score_micro"]})
 
     print(
         f"[INFO] Epoch {epoch+1}/{epochs}, train loss: {loss:.4f}, val accuracy: {acc:.4f}"
@@ -502,7 +527,8 @@ end_time = time.time()
 total_time = end_time - start_time
 
 # Log the total time taken
-wandb.log({"total_time": total_time})
+if log_results:
+    wandb.log({"total_time": total_time})
 
 # Print total time taken
 print(f"[INFO] Total time taken: {total_time:.2f} seconds")
@@ -525,7 +551,7 @@ else:
 
 model.load_state_dict(ckpt["model_state_dict"])
 per_class_metrics = True
-test_metrics = validate(model, test_loader, DEVICE, per_class_metrics=per_class_metrics)
+test_metrics = validate(model, test_loader, DEVICE, per_class_metrics=per_class_metrics, inference_rate=True)
 
 # Create a table with the results
 print("VALIDATION SET RESULTS:")
@@ -547,54 +573,59 @@ results.add_row(["F1-Score_weighted", best_metrics["f1_score_weighted"]])
 results.add_row(["Jaccard_weighted", best_metrics["jaccard_weighted"]])
 print(results)
 
-table = wandb.Table(columns=["Metrics_Validation_Set", "Value"])
-table.add_data("Accuracy", best_metrics["accuracy"])
-table.add_data("Precision_micro", best_metrics["precision_micro"])
-table.add_data("Recall_micro", best_metrics["recall_micro"])
-table.add_data("F1-Score_micro", best_metrics["f1_score_micro"])
-table.add_data("Jaccard_micro", best_metrics["jaccard_micro"])
-table.add_data("Precision_macro", best_metrics["precision_macro"])
-table.add_data("Recall_macro", best_metrics["recall_macro"])
-table.add_data("F1-Score_macro", best_metrics["f1_score_macro"])
-table.add_data("Jaccard_macro", best_metrics["jaccard_macro"])
-table.add_data("Precision_weighted", best_metrics["precision_weighted"])
-table.add_data("Recall_weighted", best_metrics["recall_weighted"])
-table.add_data("F1-Score_weighted", best_metrics["f1_score_weighted"])
-table.add_data("Jaccard_weighted", best_metrics["jaccard_weighted"])
-wandb.log({"validation_results_table": table}, commit=False)
+if log_results:
+    # Log the validation results on Wandb - VALIDATION DATA
+    table = wandb.Table(columns=["Metrics_Validation_Set", "Value"])
+    table.add_data("Accuracy", best_metrics["accuracy"])
+    table.add_data("Precision_micro", best_metrics["precision_micro"])
+    table.add_data("Recall_micro", best_metrics["recall_micro"])
+    table.add_data("F1-Score_micro", best_metrics["f1_score_micro"])
+    table.add_data("Jaccard_micro", best_metrics["jaccard_micro"])
+    table.add_data("Precision_macro", best_metrics["precision_macro"])
+    table.add_data("Recall_macro", best_metrics["recall_macro"])
+    table.add_data("F1-Score_macro", best_metrics["f1_score_macro"])
+    table.add_data("Jaccard_macro", best_metrics["jaccard_macro"])
+    table.add_data("Precision_weighted", best_metrics["precision_weighted"])
+    table.add_data("Recall_weighted", best_metrics["recall_weighted"])
+    table.add_data("F1-Score_weighted", best_metrics["f1_score_weighted"])
+    table.add_data("Jaccard_weighted", best_metrics["jaccard_weighted"])
+    wandb.log({"validation_results_table": table}, commit=False)
 
 
-# Log the test results on Wandb
-table = wandb.Table(columns=["Metrics_Test_Set", "Value"])
-table.add_data("Accuracy", test_metrics["accuracy"])
-table.add_data("Precision_micro", test_metrics["precision_micro"])
-table.add_data("Recall_micro", test_metrics["recall_micro"])
-table.add_data("F1-Score_micro", test_metrics["f1_score_micro"])
-table.add_data("Jaccard_micro", test_metrics["jaccard_micro"])
-table.add_data("Precision_macro", test_metrics["precision_macro"])
-table.add_data("Recall_macro", test_metrics["recall_macro"])
-table.add_data("F1-Score_macro", test_metrics["f1_score_macro"])
-table.add_data("Jaccard_macro", test_metrics["jaccard_macro"])
-table.add_data("Precision_weighted", test_metrics["precision_weighted"])
-table.add_data("Recall_weighted", test_metrics["recall_weighted"])
-table.add_data("F1-Score_weighted", test_metrics["f1_score_weighted"])
-table.add_data("Jaccard_weighted", test_metrics["jaccard_weighted"])
-wandb.log({"test_results_table": table}, commit=False)
+    # Log the test results on Wandb - TEST DATA
+    table = wandb.Table(columns=["Metrics_Test_Set", "Value"])
+    table.add_data("Inference_rate", test_metrics["inference_rate"])
+    table.add_data("Accuracy", test_metrics["accuracy"])
+    table.add_data("Precision_micro", test_metrics["precision_micro"])
+    table.add_data("Recall_micro", test_metrics["recall_micro"])
+    table.add_data("F1-Score_micro", test_metrics["f1_score_micro"])
+    table.add_data("Jaccard_micro", test_metrics["jaccard_micro"])
+    table.add_data("Precision_macro", test_metrics["precision_macro"])
+    table.add_data("Recall_macro", test_metrics["recall_macro"])
+    table.add_data("F1-Score_macro", test_metrics["f1_score_macro"])
+    table.add_data("Jaccard_macro", test_metrics["jaccard_macro"])
+    table.add_data("Precision_weighted", test_metrics["precision_weighted"])
+    table.add_data("Recall_weighted", test_metrics["recall_weighted"])
+    table.add_data("F1-Score_weighted", test_metrics["f1_score_weighted"])
+    table.add_data("Jaccard_weighted", test_metrics["jaccard_weighted"])
+    wandb.log({"test_results_table": table}, commit=False)
 
 
-if per_class_metrics:
-    columns_per_class = ["Metric"] + [f"Phase_{i}" for i in range(num_classes)]
-    table = wandb.Table(columns=columns_per_class)
-    table.add_data(*(["Jaccard"] + [str(j) for j in test_metrics["jaccard_per_class"]]))
-    table.add_data(
-        *(["Precision"] + [str(p) for p in test_metrics["precision_per_class"]])
-    )
-    table.add_data(*(["Recall"] + [str(r) for r in test_metrics["recall_per_class"]]))
-    table.add_data(*(["F1-Score"] + [str(f) for f in test_metrics["f1_per_class"]]))
-    wandb.log({"test_results_table_per_class": table}, commit=False)
+    if per_class_metrics:
+        columns_per_class = ["Metric"] + [f"Phase_{i}" for i in range(num_classes)]
+        table = wandb.Table(columns=columns_per_class)
+        table.add_data(*(["Jaccard"] + [str(j) for j in test_metrics["jaccard_per_class"]]))
+        table.add_data(
+            *(["Precision"] + [str(p) for p in test_metrics["precision_per_class"]])
+        )
+        table.add_data(*(["Recall"] + [str(r) for r in test_metrics["recall_per_class"]]))
+        table.add_data(*(["F1-Score"] + [str(f) for f in test_metrics["f1_per_class"]]))
+        wandb.log({"test_results_table_per_class": table}, commit=False)
 
 # Print the results
 # Create a table with the results
+print(f"Inference rate: {test_metrics["inference_rate"]:.2f} FPS")
+print("*" * 50)
 print("TEST SET RESULTS:")
 print("#################")
 results = PrettyTable()
@@ -612,40 +643,32 @@ results.add_row(["Precision_weighted", test_metrics["precision_weighted"]])
 results.add_row(["Recall_weighted", test_metrics["recall_weighted"]])
 results.add_row(["F1-Score_weighted", test_metrics["f1_score_weighted"]])
 results.add_row(["Jaccard_weighted", test_metrics["jaccard_weighted"]])
+results.add_row(['Inference_rate', test_metrics["inference_rate"]])
 
 print(results)
 
-print("Run ID: ", wandb.run.id)
-print("Run URL: ", wandb.run.get_url())
-
-wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
-wandb.run.summary["test_precision_micro"] = test_metrics["precision_micro"]
-wandb.run.summary["test_recall_micro"] = test_metrics["recall_micro"]
-wandb.run.summary["test_f1_score_micro"] = test_metrics["f1_score_micro"]
-wandb.run.summary["test_jaccard_micro"] = test_metrics["jaccard_micro"]
-wandb.run.summary["test_precision_macro"] = test_metrics["precision_macro"]
-wandb.run.summary["test_recall_macro"] = test_metrics["recall_macro"]
-wandb.run.summary["test_f1_score_macro"] = test_metrics["f1_score_macro"]
-wandb.run.summary["test_jaccard_macro"] = test_metrics["jaccard_macro"]
-wandb.run.summary["test_precision_weighted"] = test_metrics["precision_weighted"]
-wandb.run.summary["test_recall_weighted"] = test_metrics["recall_weighted"]
-wandb.run.summary["test_f1_score_weighted"] = test_metrics["f1_score_weighted"]
-wandb.run.summary["test_jaccard_weighted"] = test_metrics["jaccard_weighted"]
-
-# Save confusion matrix
-create_confusion_matrix = True
-if create_confusion_matrix:
-    cf_matrix = test_metrics["confusion_matrix"]
-    confusion_path = os.path.join(
-        qualitative_results_path, f"confusion_matrix_{run_id}.png"
-    )
-
-    save_confusion_matrix(cf_matrix, confusion_path)
-    wandb.log({"confusion_matrix": wandb.Image(confusion_path)})
+if log_results:
+    print("Run ID: ", wandb.run.id)
+    print("Run URL: ", wandb.run.get_url())
+    wandb.run.summary["test_accuracy"] = test_metrics["accuracy"]
+    wandb.run.summary["test_precision_micro"] = test_metrics["precision_micro"]
+    wandb.run.summary["test_recall_micro"] = test_metrics["recall_micro"]
+    wandb.run.summary["test_f1_score_micro"] = test_metrics["f1_score_micro"]
+    wandb.run.summary["test_jaccard_micro"] = test_metrics["jaccard_micro"]
+    wandb.run.summary["test_precision_macro"] = test_metrics["precision_macro"]
+    wandb.run.summary["test_recall_macro"] = test_metrics["recall_macro"]
+    wandb.run.summary["test_f1_score_macro"] = test_metrics["f1_score_macro"]
+    wandb.run.summary["test_jaccard_macro"] = test_metrics["jaccard_macro"]
+    wandb.run.summary["test_precision_weighted"] = test_metrics["precision_weighted"]
+    wandb.run.summary["test_recall_weighted"] = test_metrics["recall_weighted"]
+    wandb.run.summary["test_f1_score_weighted"] = test_metrics["f1_score_weighted"]
+    wandb.run.summary["test_jaccard_weighted"] = test_metrics["jaccard_weighted"]
 
 # Save qualitative results
-create_qualitative_results = True
+create_qualitative_results = args.create_qualitative_results
+
 if create_qualitative_results:
+    # The ribbon diagram
     qualitative_results_path = os.path.join(
         qualitative_results_path, f"ribbon_diagram_{run_id}.png"
     )
@@ -657,6 +680,18 @@ if create_qualitative_results:
         num_classes,
         DEVICE,
     )
-    wandb.log({"qualitative_results": wandb.Image(qualitative_results_path)})
 
-wandb.finish()
+    # Confusion matrix
+    cf_matrix = test_metrics["confusion_matrix"]
+    confusion_path = os.path.join(
+        qualitative_results_path, f"confusion_matrix_{run_id}.png"
+    )
+
+    save_confusion_matrix(cf_matrix, confusion_path)
+    
+    if log_results:
+        wandb.log({"qualitative_results": wandb.Image(qualitative_results_path)})
+        wandb.log({"confusion_matrix": wandb.Image(confusion_path)})
+
+if log_results:
+    wandb.finish()

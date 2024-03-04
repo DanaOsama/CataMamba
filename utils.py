@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.colors import ListedColormap, Normalize
 import matplotlib as mpl
+import time
 
 def save_checkpoint(model, optimizer, epoch, path, scheduler=None, best=False):
     checkpoint = {
@@ -103,11 +104,11 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
     return running_loss / total_frames
 
 
-def validate(model, validation_loader, DEVICE, per_class_metrics=True):
+def validate(model, validation_loader, DEVICE, per_class_metrics=True, inference_rate=False):
     model.eval()  # Set the model to evaluation mode
     all_predicted = []
     all_labels = []
-
+    start_time = time.time()
     with torch.no_grad():  # No need to track gradients during validation
         for data, labels in tqdm(validation_loader):
             data, labels = data.to(DEVICE), labels.to(DEVICE)
@@ -119,9 +120,12 @@ def validate(model, validation_loader, DEVICE, per_class_metrics=True):
             # Convert one-hot encoded labels to class indices for comparison
             _, labels_indices = torch.max(labels, dim=-1)
             all_labels.extend(labels_indices.cpu().numpy())
+    end_time = time.time()
 
     all_predicted = np.concatenate(all_predicted)
     all_labels = np.concatenate(all_labels)
+
+    num_frames = len(all_labels)
 
     # Calculate metrics
     # TODO: micro or macro or weighted?
@@ -177,6 +181,10 @@ def validate(model, validation_loader, DEVICE, per_class_metrics=True):
         metrics["recall_per_class"] = recall_per_class
         metrics["f1_per_class"] = f1_per_class
         metrics["jaccard_per_class"] = jaccard_per_class
+    
+    if inference_rate:
+        total_time = end_time - start_time
+        metrics["inference_rate"] = num_frames / total_time
 
     return metrics
 
