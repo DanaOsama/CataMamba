@@ -4,6 +4,7 @@ from models.vit import ViT
 
 from models.mamba import cata_mamba
 from models.mamba_v2 import cata_mamba_v2
+from models.mamba_fc import cata_mamba_fc
 from timesformer.models.vit import TimeSformer
 import os
 import torch
@@ -161,7 +162,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--architecture",
-    choices=["CNN_RNN", "CNN", "ViT", "Cata-Mamba", "Cata-Mamba-v2", "TimeSformer"],
+    choices=["CNN_RNN", "CNN", "ViT", "Cata-Mamba", "Cata-Mamba-v2", "Cata-Mamba-fc", "TimeSformer"],
     help="Model to use for training",
     default="CNN_RNN",
 )
@@ -306,6 +307,14 @@ architectures = {
         N=args.mamba_num_blocks,
         dilation_levels=args.dilation_levels,
         feature_extractor=cnn_model,
+    ),
+    "Cata-Mamba-fc": cata_mamba_fc(
+        d_state=args.d_state,
+        d_conv=args.d_conv,
+        expand=args.expand,
+        num_classes=num_classes,
+        N=args.mamba_num_blocks,
+        feature_extractor=cnn_model,
     )
 }
 model = architectures[architecture]
@@ -367,6 +376,8 @@ log_results = args.log_results
 # ####################################################################################################################################
 if log_results:
     project_name = args.architecture
+    if args.architecture == "Cata-Mamba-fc":
+        project_name = "Cata-Mamba-v2"
     run_id = None
 else:
     #generate random integer

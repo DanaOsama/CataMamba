@@ -1,0 +1,2 @@
+python train.py --run_name Test1_seed=1_epochs=50_numclips_9_clipsize_30 --seed 1 --architecture CNN_RNN --rnn_model lstm --cnn_model resnet50 --hidden_size 256 --epochs 50 --optimizer AdamW --num_clips 9 --clip_size 30 --batch_size 1 --step_size 2 --learning_rate 0.001 
+python train.py --run_name Test1_seed=2_epochs=50_numclips_9_clipsize_30 --seed 2 --architecture CNN_RNN --rnn_model lstm --cnn_model resnet50 --hidden_size 256 --epochs 50 --optimizer AdamW --num_clips 9 --clip_size 30 --batch_size 1 --step_size 2 --learning_rate 0.001 
