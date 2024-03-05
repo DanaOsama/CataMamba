@@ -1,5 +1,0 @@
-
-
-python train.py --run_name 1_101-seed0 --seed 0 --architecture Cata-Mamba --mamba_num_blocks 1 --dilation_levels 3 --cnn_model resnet50 --d_state 32 --d_conv 4 --expand 2 --epochs 50 --num_clips -1 --optimizer AdamW --scheduler Cosine --weight_decay 0.0001 --learning_rate 5e-5 --weighted_loss False --label_smoothing 0.1 --clip-grad-norm True
-python train.py --run_name 1_101-seed1 --seed 1 --architecture Cata-Mamba --mamba_num_blocks 1 --dilation_levels 3 --cnn_model resnet50 --d_state 32 --d_conv 4 --expand 2 --epochs 50 --num_clips -1 --optimizer AdamW --scheduler Cosine --weight_decay 0.0001 --learning_rate 5e-5 --weighted_loss False --label_smoothing 0.1 --clip-grad-norm True
-python train.py --run_name 1_101-seed2 --seed 2 --architecture Cata-Mamba --mamba_num_blocks 1 --dilation_levels 3 --cnn_model resnet50 --d_state 32 --d_conv 4 --expand 2 --epochs 50 --num_clips -1 --optimizer AdamW --scheduler Cosine --weight_decay 0.0001 --learning_rate 5e-5 --weighted_loss False --label_smoothing 0.1 --clip-grad-norm True

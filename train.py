@@ -3,6 +3,7 @@ from models.cnn import CNN
 from models.vit import ViT
 
 from models.mamba import cata_mamba
+from models.mamba_v2 import cata_mamba_v2
 from timesformer.models.vit import TimeSformer
 import os
 import torch
@@ -160,7 +161,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--architecture",
-    choices=["CNN_RNN", "CNN", "ViT", "Cata-Mamba", "TimeSformer"],
+    choices=["CNN_RNN", "CNN", "ViT", "Cata-Mamba", "Cata-Mamba-v2", "TimeSformer"],
     help="Model to use for training",
     default="CNN_RNN",
 )
@@ -297,6 +298,15 @@ architectures = {
         attention_type="divided_space_time",
         pretrained_model=args.path_pretrained_TimeSformer,
     ),
+    "Cata-Mamba-v2": cata_mamba_v2(
+        d_state=args.d_state,
+        d_conv=args.d_conv,
+        expand=args.expand,
+        num_classes=num_classes,
+        N=args.mamba_num_blocks,
+        dilation_levels=args.dilation_levels,
+        feature_extractor=cnn_model,
+    )
 }
 model = architectures[architecture]
 model.to(DEVICE)
@@ -550,7 +560,7 @@ else:
 
 
 model.load_state_dict(ckpt["model_state_dict"])
-per_class_metrics = True
+per_class_metrics = False
 test_metrics = validate(model, test_loader, DEVICE, per_class_metrics=per_class_metrics, inference_rate=True)
 
 # Create a table with the results
@@ -624,7 +634,8 @@ if log_results:
 
 # Print the results
 # Create a table with the results
-print(f"Inference rate: {test_metrics["inference_rate"]:.2f} FPS")
+fps = test_metrics["inference_rate"]
+print(f"Inference rate: {fps} FPS")
 print("*" * 50)
 print("TEST SET RESULTS:")
 print("#################")
@@ -669,14 +680,14 @@ create_qualitative_results = args.create_qualitative_results
 
 if create_qualitative_results:
     # The ribbon diagram
-    qualitative_results_path = os.path.join(
+    qualitative_results_path_ribbon = os.path.join(
         qualitative_results_path, f"ribbon_diagram_{run_id}.png"
     )
     batch = next(iter(test_loader))
     make_qualitative_results(
         {f"{architecture}": model},
         next(iter(test_loader)),
-        qualitative_results_path,
+        qualitative_results_path_ribbon,
         num_classes,
         DEVICE,
     )
@@ -690,7 +701,7 @@ if create_qualitative_results:
     save_confusion_matrix(cf_matrix, confusion_path)
     
     if log_results:
-        wandb.log({"qualitative_results": wandb.Image(qualitative_results_path)})
+        wandb.log({"qualitative_results": wandb.Image(qualitative_results_path_ribbon)})
         wandb.log({"confusion_matrix": wandb.Image(confusion_path)})
 
 if log_results:
