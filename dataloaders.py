@@ -20,18 +20,6 @@ import re
 # Set numpy random seed for reproducibility
 np.random.seed(0)
 
-def extract_frame_number(filename):
-    # The regex pattern \d+ matches one or more digits
-    match = re.search(r"\d+", filename)
-    if match:
-        return (
-            match.group()
-        )  # This will return the first occurrence of one or more digits in the string
-    else:
-        return None  # Or raise an error/exception if preferred
-
-
-
 class Cataracts_101_21_v2(Dataset):
     def __init__(
         self,

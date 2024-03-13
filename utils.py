@@ -38,41 +38,8 @@ def save_checkpoint(model, optimizer, epoch, path, scheduler=None, best=False):
 
 def load_checkpoint(path):
     ckpt = torch.load(path)
-    # model.load_state_dict(ckpt["model_state_dict"])
-    # optimizer.load_state_dict(ckpt["optimizer_state_dict"])
-
-    # epoch = ckpt["epoch"]
     print("[INFO] checkpoint loaded")
     return ckpt
-
-# def train(model, optimizer, criterion, train_loader, DEVICE):
-#     model.train()  # Set the model to training mode
-#     running_loss = 0.0
-#     total_frames = 0
-
-#     for inputs, labels in tqdm(train_loader):
-#         inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # move data to device
-#         optimizer.zero_grad()  # Zero the gradients
-#         predictions = model(inputs)
-#         batch_size, num_frames, num_classes = predictions.size()
-#         predictions = predictions.reshape(batch_size, num_classes, num_frames)
-#         # predictions = predictions.reshape(batch_size * num_frames, num_classes)
-#         # print(labels.shape)
-#         labels = torch.argmax(labels, dim=-1)
-#         # labels = labels.view(-1)
-#         total_frames += num_frames*batch_size
-
-#         # Expected input shape: (batch_size * num_frames, num_classes)
-#         # Expected label shape: (batch_size * num_frames) where each label is a class index
-#         loss = criterion(predictions, labels)
-
-#         # Backpropagation and optimization
-#         loss.backward()
-#         optimizer.step()
-
-#         # losses.append(loss.item())
-#         running_loss += loss.item()
-#     return running_loss / total_frames
 
 def train(model, optimizer, criterion, train_loader, DEVICE):
     model.train()  # Set the model to training mode
@@ -98,9 +65,9 @@ def train(model, optimizer, criterion, train_loader, DEVICE):
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
-        # losses.append(loss.item())
 
-    # return running_loss / len(train_loader)
+
+
     return running_loss / total_frames
 
 
@@ -128,7 +95,6 @@ def validate(model, validation_loader, DEVICE, per_class_metrics=True, inference
     num_frames = len(all_labels)
 
     # Calculate metrics
-    # TODO: micro or macro or weighted?
     precision_micro = precision_score(
         all_labels, all_predicted, zero_division=0, average="micro"
     )

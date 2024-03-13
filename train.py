@@ -427,16 +427,12 @@ transform = v2.Compose(
         v2.RandomCrop(224),
         v2.RandomHorizontalFlip(),
         v2.RandomRotation(5),
-        # v2.RandomEqualize(),
-        # v2.ToTensor(),  # This converts PIL images to PyTorch tensors
-        # v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Example normalization
     ]
 )
 
 train_dataset = Cataracts_101_21_v2(
     root_dir,
     json_path,
-    # dataset_name="1_Cataracts-21",
     dataset_name=dataset,
     split="Train",
     num_classes=num_classes,
@@ -449,7 +445,6 @@ train_dataset = Cataracts_101_21_v2(
 val_dataset = Cataracts_101_21_v2(
     root_dir,
     json_path,
-    # dataset_name="1_Cataracts-21",
     dataset_name=dataset,
     split="Validation",
     num_classes=num_classes,
@@ -462,7 +457,6 @@ val_dataset = Cataracts_101_21_v2(
 test_dataset = Cataracts_101_21_v2(
     root_dir,
     json_path,
-    # dataset_name="1_Cataracts-21",
     dataset_name=dataset,
     split="Test",
     num_classes=num_classes,
@@ -509,7 +503,6 @@ for epoch in range(start_epoch, epochs):
         wandb.log({"train_loss": loss})
 
     # acc = validate(model, val_loader, DEVICE)
-    # TODO: Check which metric I want to use to evaluate the best model
     metrics = validate(model, val_loader, DEVICE)
 
     # Update the learning rate

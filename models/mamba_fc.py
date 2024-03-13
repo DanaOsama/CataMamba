@@ -38,7 +38,7 @@ class cata_mamba_fc(nn.Module):
         # Learnable parameter for scaling the residual connection
         self.res_scale = nn.Parameter(torch.ones(1))
 
-    @torch.autocast(device_type="cuda")
+    # @torch.autocast(device_type="cuda")
     def forward(self, x):
         spatial_features = self.feature_extractor(x)
         x = spatial_features
