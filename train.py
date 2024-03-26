@@ -18,6 +18,7 @@ import time
 
 # LOGGING
 import wandb
+from calflops import calculate_flops
 
 from prettytable import PrettyTable
 import argparse
@@ -90,9 +91,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "--clip-grad-norm",
-    type=bool,
-    help="Clip the gradient norm to prevent exploding gradients",
-    default=True,
+    action="store_false",
+    help="Clip the gradient norm to prevent exploding gradients. Default is True",
 )
 ######################### Mamba specific parameters ############################
 parser.add_argument(
@@ -128,9 +128,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "--weighted_loss",
-    type=bool,
-    help="Whether to use weighted loss for the classes",
-    default=False,
+    action="store_true",
+    help="Whether to use weighted loss for the classes. Default is False.",
 )
 parser.add_argument(
     "--label_smoothing",
@@ -183,16 +182,14 @@ parser.add_argument(
 )
 parser.add_argument(
     "--bidirectional",
-    type=bool,
-    help="Whether to use a bidirectional RNN",
-    default=False,
+    action="store_true",
+    help="Whether to use a bidirectional RNN. Default is False.",
 )
 
 parser.add_argument(
     "--resume_training",
-    type=bool,
-    help="Whether to resume training from a checkpoint",
-    default=False,
+    action="store_true",
+    help="Whether to resume training from a checkpoint. Default is False.",
 )
 
 parser.add_argument(
@@ -216,15 +213,15 @@ parser.add_argument(
 )
 parser.add_argument(
     "--create_qualitative_results",
-    type=bool,
-    help="Whether to create qualitative results",
-    default=True,
+    action="store_false",
+    help="Whether to create qualitative results. Default is True.",
 )
+# If the flag is present in the command line, 
+# log_results will be False; if the flag is omitted, it defaults to True.
 parser.add_argument(
     "--log_results",
-    type=bool,
-    help="Whether to log the results on Wandb",
-    default=True,
+    action="store_false",
+    help="Whether to log the results on Wandb. Default is True",
 )
 # Parse the command-line arguments
 args = parser.parse_args()
@@ -373,6 +370,8 @@ if args.clip_grad_norm:
 
 # Logging
 log_results = args.log_results
+
+print(f"[INFO] Logging results: {log_results}")
 # ####################################################################################################################################
 if log_results:
     project_name = args.architecture
@@ -408,8 +407,6 @@ elif log_results:  # First time training
     print(f"[INFO] Run ID: {run_id}")
 else:
     print("[INFO] Logging is disabled")
-
-
 
 # number of parameters in the model
 num_params = sum(p.numel() for p in model.parameters())
@@ -475,6 +472,17 @@ else:
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+input_shape = (batch_size, num_clips*clip_size, 3, 224, 224)
+flops, macs, params = calculate_flops(model=model,
+                                      input_shape=input_shape,
+                                      output_as_string=True,
+                                      output_precision=4)
+print("%s FLOPs:%s   MACs:%s   Params:%s \n" %(architecture, flops, macs, params))
+if log_results:
+    wandb.log({"FLOPs": flops})
+    wandb.log({"MACs": macs})
+    wandb.log({"Params": params})
 
 best_val_acc = 0  # to keep track of best validation accuracy
 best_val_epoch = -1
